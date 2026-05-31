@@ -23,6 +23,25 @@ services:
       start_period: 30s
     restart: unless-stopped
 
+  flyway:
+    image: flyway/flyway:10-alpine
+    container_name: library-flyway
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    command:
+      - "-url=jdbc:sqlserver://library-sqlserver:1433;databaseName=LibraryDb;encrypt=true;trustServerCertificate=true"
+      - "-user=sa"
+      - "-password=Strong!Passw0rd"
+      - "-locations=filesystem:/flyway/sql"
+      - "-baselineOnMigrate=true"
+      - "-validateMigrationNaming=true"
+      - "migrate"
+    volumes:
+      - ./migrations:/flyway/sql:ro
+    profiles:
+      - tools
+
 volumes:
   sqlserver-data:
     name: library-sqlserver-data
