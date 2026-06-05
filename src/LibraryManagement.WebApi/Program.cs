@@ -24,8 +24,26 @@ try
     builder.Services.AddControllers();
     builder.Services.AddOpenApi();
 
-    // Infrastructure: DbContext, repositorios EF, UnitOfWork.
-    builder.Services.AddEntityFrameworkInfrastructure(builder.Configuration);
+    // Infrastructure: switch entre EF y ADO segun appsettings.
+    var dataAccessProvider = builder.Configuration["DataAccess:Provider"]
+        ?? throw new InvalidOperationException(
+            "Configuration key 'DataAccess:Provider' is missing. Set it to 'EntityFramework' or 'AdoNet'.");
+
+    Log.Information("Data access provider: {Provider}", dataAccessProvider);
+
+    if (string.Equals(dataAccessProvider, "EntityFramework", StringComparison.OrdinalIgnoreCase))
+    {
+        builder.Services.AddEntityFrameworkInfrastructure(builder.Configuration);
+    }
+    else if (string.Equals(dataAccessProvider, "AdoNet", StringComparison.OrdinalIgnoreCase))
+    {
+        builder.Services.AddAdoNetInfrastructure(builder.Configuration);
+    }
+    else
+    {
+        throw new InvalidOperationException(
+            $"Unknown DataAccess provider '{dataAccessProvider}'. Expected 'EntityFramework' or 'AdoNet'.");
+    }
 
     var app = builder.Build();
 
