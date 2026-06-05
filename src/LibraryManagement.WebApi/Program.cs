@@ -1,3 +1,4 @@
+using LibraryManagement.Infrastructure.DependencyInjection;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -22,6 +23,9 @@ try
     // Services del contenedor DI.
     builder.Services.AddControllers();
     builder.Services.AddOpenApi();
+
+    // Infrastructure: DbContext, repositorios EF, UnitOfWork.
+    builder.Services.AddEntityFrameworkInfrastructure(builder.Configuration);
 
     var app = builder.Build();
 
