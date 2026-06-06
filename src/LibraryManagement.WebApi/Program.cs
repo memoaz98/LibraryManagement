@@ -1,5 +1,6 @@
 using LibraryManagement.Application.Common;
 using LibraryManagement.Infrastructure.DependencyInjection;
+using LibraryManagement.WebApi.ExceptionHandlers;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -24,6 +25,10 @@ try
     // Services del contenedor DI.
     builder.Services.AddControllers();
     builder.Services.AddOpenApi();
+
+    // Global exception handler (traduce excepciones a ProblemDetails).
+    builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+    builder.Services.AddProblemDetails();
 
     // Application: services + validators.
     builder.Services.AddApplication();
@@ -52,6 +57,8 @@ try
     var app = builder.Build();
 
     // Pipeline HTTP.
+    app.UseExceptionHandler();
+
     if (app.Environment.IsDevelopment())
     {
         app.MapOpenApi();
