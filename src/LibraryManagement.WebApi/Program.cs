@@ -1,3 +1,4 @@
+using LibraryManagement.Application.Common;
 using LibraryManagement.Infrastructure.DependencyInjection;
 using Scalar.AspNetCore;
 using Serilog;
@@ -23,6 +24,9 @@ try
     // Services del contenedor DI.
     builder.Services.AddControllers();
     builder.Services.AddOpenApi();
+
+    // Application: services + validators.
+    builder.Services.AddApplication();
 
     // Infrastructure: switch entre EF y ADO segun appsettings.
     var dataAccessProvider = builder.Configuration["DataAccess:Provider"]
