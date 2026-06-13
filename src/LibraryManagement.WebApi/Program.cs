@@ -16,24 +16,19 @@ try
 
     var builder = WebApplication.CreateBuilder(args);
 
-    // Reemplaza el logger por defecto con Serilog, leyendo configuracion de appsettings.
     builder.Host.UseSerilog((context, services, configuration) => configuration
         .ReadFrom.Configuration(context.Configuration)
         .ReadFrom.Services(services)
         .Enrich.FromLogContext());
 
-    // Services del contenedor DI.
     builder.Services.AddControllers();
     builder.Services.AddOpenApi();
 
-    // Global exception handler (traduce excepciones a ProblemDetails).
     builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
     builder.Services.AddProblemDetails();
 
-    // Application: services + validators.
     builder.Services.AddApplication();
 
-    // Infrastructure: switch entre EF y ADO segun appsettings.
     var dataAccessProvider = builder.Configuration["DataAccess:Provider"]
         ?? throw new InvalidOperationException(
             "Configuration key 'DataAccess:Provider' is missing. Set it to 'EntityFramework' or 'AdoNet'.");
@@ -54,23 +49,26 @@ try
             $"Unknown DataAccess provider '{dataAccessProvider}'. Expected 'EntityFramework' or 'AdoNet'.");
     }
 
+    // Auth: Identity Core + JWT Bearer middleware.
+    builder.Services.AddJwtAuthentication(builder.Configuration);
+
     var app = builder.Build();
 
-    // Pipeline HTTP.
     app.UseExceptionHandler();
 
     if (app.Environment.IsDevelopment())
     {
         app.MapOpenApi();
-        // Scalar UI montada en /scalar/v1
         app.MapScalarApiReference();
     }
 
-    // Logueo automatico de cada request HTTP (metodo, ruta, status, duracion).
     app.UseSerilogRequestLogging();
-
     app.UseHttpsRedirection();
+
+    // Authentication BEFORE authorization. Order matters.
+    app.UseAuthentication();
     app.UseAuthorization();
+
     app.MapControllers();
 
     app.Run();

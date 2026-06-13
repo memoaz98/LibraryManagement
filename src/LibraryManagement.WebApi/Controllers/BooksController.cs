@@ -1,5 +1,7 @@
 using LibraryManagement.Application.Dtos.Books;
 using LibraryManagement.Application.Services;
+using LibraryManagement.Infrastructure.DependencyInjection;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LibraryManagement.WebApi.Controllers;
@@ -7,6 +9,7 @@ namespace LibraryManagement.WebApi.Controllers;
 [ApiController]
 [Route("api/books")]
 [Produces("application/json")]
+[Authorize(Policy = AuthInfrastructureServiceCollectionExtensions.Policies.ReaderOrAbove)]
 public class BooksController : ControllerBase
 {
     private readonly BookService _bookService;
@@ -37,8 +40,10 @@ public class BooksController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = AuthInfrastructureServiceCollectionExtensions.Policies.LibrarianOrAdmin)]
     [ProducesResponseType(typeof(BookDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<BookDto>> CreateAsync(
@@ -50,8 +55,10 @@ public class BooksController : ControllerBase
     }
 
     [HttpPut("{id:long}")]
+    [Authorize(Policy = AuthInfrastructureServiceCollectionExtensions.Policies.LibrarianOrAdmin)]
     [ProducesResponseType(typeof(BookDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<BookDto>> UpdateAsync(
         [FromRoute] long id,
@@ -63,7 +70,9 @@ public class BooksController : ControllerBase
     }
 
     [HttpDelete("{id:long}")]
+    [Authorize(Policy = AuthInfrastructureServiceCollectionExtensions.Policies.AdminOnly)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteAsync(
         [FromRoute] long id,

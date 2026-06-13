@@ -6,10 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LibraryManagement.WebApi.ExceptionHandlers;
 
-/// <summary>
-/// Translates exceptions thrown by lower layers into RFC 7807 ProblemDetails
-/// HTTP responses. Registered as a global IExceptionHandler in Program.cs.
-/// </summary>
 public class GlobalExceptionHandler : IExceptionHandler
 {
     private readonly ILogger<GlobalExceptionHandler> _logger;
@@ -29,6 +25,7 @@ public class GlobalExceptionHandler : IExceptionHandler
             ValidationException validationEx => HandleValidationException(validationEx),
             NotFoundException notFoundEx => HandleNotFoundException(notFoundEx),
             ConflictException conflictEx => HandleConflictException(conflictEx),
+            UnauthorizedException unauthorizedEx => HandleUnauthorizedException(unauthorizedEx),
             DomainException domainEx => HandleDomainException(domainEx),
             _ => HandleUnexpectedException(exception)
         };
@@ -83,6 +80,17 @@ public class GlobalExceptionHandler : IExceptionHandler
             Status = StatusCodes.Status409Conflict,
             Detail = ex.Message,
             Type = "https://tools.ietf.org/html/rfc7231#section-6.5.8"
+        };
+    }
+
+    private static ProblemDetails HandleUnauthorizedException(UnauthorizedException ex)
+    {
+        return new ProblemDetails
+        {
+            Title = "Authentication required.",
+            Status = StatusCodes.Status401Unauthorized,
+            Detail = ex.Message,
+            Type = "https://tools.ietf.org/html/rfc7235#section-3.1"
         };
     }
 
