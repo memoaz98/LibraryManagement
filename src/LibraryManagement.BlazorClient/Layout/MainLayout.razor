@@ -1,16 +1,23 @@
-﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
+@inherits LayoutComponentBase
+
+<div style="display: flex; min-height: 100vh; font-family: system-ui, sans-serif;">
+    <aside style="width: 220px; background: #2c3e50; color: white; padding: 1rem;">
+        <h3 style="margin-top: 0;">📚 Library</h3>
         <NavMenu />
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
+    </aside>
+    <main style="flex: 1; padding: 1.5rem;">
+        @Body
     </main>
 </div>
+
+<style>
+    nav a {
+        color: #ecf0f1;
+        text-decoration: none;
+        display: block;
+        padding: 0.4rem 0;
+    }
+    nav a:hover {
+        color: #3498db;
+    }
+</style>
