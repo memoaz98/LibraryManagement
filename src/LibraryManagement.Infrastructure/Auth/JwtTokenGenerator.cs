@@ -7,10 +7,6 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace LibraryManagement.Infrastructure.Auth;
 
-/// <summary>
-/// Default implementation of <see cref="IJwtTokenGenerator"/> using
-/// <see cref="JwtSecurityTokenHandler"/> with HMAC-SHA256 signing.
-/// </summary>
 public class JwtTokenGenerator : IJwtTokenGenerator
 {
     private readonly JwtOptions _options;
@@ -37,12 +33,15 @@ public class JwtTokenGenerator : IJwtTokenGenerator
 
         foreach (var role in roles)
         {
-            claims.Add(new Claim(ClaimTypes.Role, role));
+            claims.Add(new Claim("role", role));
         }
 
         var keyBytes = Convert.FromBase64String(_options.SigningKey);
         var signingKey = new SymmetricSecurityKey(keyBytes);
         var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
+
+        var handler = new JwtSecurityTokenHandler();
+        handler.OutboundClaimTypeMap.Clear();
 
         var jwt = new JwtSecurityToken(
             issuer: _options.Issuer,
@@ -52,7 +51,7 @@ public class JwtTokenGenerator : IJwtTokenGenerator
             expires: expiresAt,
             signingCredentials: credentials);
 
-        var tokenString = new JwtSecurityTokenHandler().WriteToken(jwt);
+        var tokenString = handler.WriteToken(jwt);
 
         return new AccessTokenResult(tokenString, expiresAt);
     }

@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using LibraryManagement.Application.Auth;
 using LibraryManagement.Domain.Constants;
@@ -10,17 +11,8 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace LibraryManagement.Infrastructure.DependencyInjection;
 
-/// <summary>
-/// Extension methods for wiring authentication (ASP.NET Identity core,
-/// JWT Bearer middleware, and authorization policies) into an
-/// <see cref="IServiceCollection"/>.
-/// </summary>
 public static class AuthInfrastructureServiceCollectionExtensions
 {
-    /// <summary>
-    /// Well-known names for authorization policies. Use these from
-    /// <c>[Authorize(Policy = ...)]</c> attributes to avoid magic strings.
-    /// </summary>
     public static class Policies
     {
         public const string AdminOnly = "AdminOnly";
@@ -32,6 +24,11 @@ public static class AuthInfrastructureServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        // Disable legacy WS-* claim type mapping on JWT inbound side, so the
+        // JWT can carry plain "role" claims instead of the long URI.
+        JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+        JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
+
         services
             .AddIdentityCore<IdentityUser>(options =>
             {
@@ -62,6 +59,8 @@ public static class AuthInfrastructureServiceCollectionExtensions
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
+                options.MapInboundClaims = false;
+
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
@@ -77,7 +76,9 @@ public static class AuthInfrastructureServiceCollectionExtensions
                     ClockSkew = TimeSpan.FromSeconds(30),
 
                     RequireExpirationTime = true,
-                    RequireSignedTokens = true
+                    RequireSignedTokens = true,
+
+                    RoleClaimType = "role"
                 };
             });
 

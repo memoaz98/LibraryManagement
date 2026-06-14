@@ -4,8 +4,6 @@ using LibraryManagement.WebApi.ExceptionHandlers;
 using Scalar.AspNetCore;
 using Serilog;
 
-// Inicializa un logger "bootstrap" — captura errores que pasen ANTES de que
-// el host esté completamente configurado (ej. errores al leer appsettings).
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
     .CreateBootstrapLogger();
@@ -26,6 +24,22 @@ try
 
     builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
     builder.Services.AddProblemDetails();
+
+    // CORS for Blazor client.
+    const string BlazorClientPolicy = "BlazorClient";
+    var allowedOrigins = builder.Configuration
+        .GetSection("Cors:AllowedOrigins")
+        .Get<string[]>() ?? Array.Empty<string>();
+
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy(BlazorClientPolicy, policy =>
+        {
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+    });
 
     builder.Services.AddApplication();
 
@@ -49,7 +63,6 @@ try
             $"Unknown DataAccess provider '{dataAccessProvider}'. Expected 'EntityFramework' or 'AdoNet'.");
     }
 
-    // Auth: Identity Core + JWT Bearer middleware.
     builder.Services.AddJwtAuthentication(builder.Configuration);
 
     var app = builder.Build();
@@ -65,7 +78,8 @@ try
     app.UseSerilogRequestLogging();
     app.UseHttpsRedirection();
 
-    // Authentication BEFORE authorization. Order matters.
+    app.UseCors(BlazorClientPolicy);
+
     app.UseAuthentication();
     app.UseAuthorization();
 
