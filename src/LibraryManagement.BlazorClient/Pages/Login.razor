@@ -1,0 +1,61 @@
+@page "/login"
+
+<PageTitle>Login</PageTitle>
+
+<h1>Login</h1>
+
+<div style="max-width: 400px;">
+    <div style="margin-bottom: 1rem;">
+        <label>Email:</label><br />
+        <input type="email" @bind="_email" style="width: 100%; padding: 0.5rem;" />
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+        <label>Password:</label><br />
+        <input type="password" @bind="_password" style="width: 100%; padding: 0.5rem;" />
+    </div>
+
+    <button @onclick="HandleLogin" disabled="@_isLoading" style="padding: 0.5rem 1rem;">
+        @(_isLoading ? "Logging in..." : "Login")
+    </button>
+
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <div style="margin-top: 1rem; color: red;">
+            @_error
+        </div>
+    }
+</div>
+
+<p style="margin-top: 1rem;">
+    Don't have an account? <a href="register">Register</a>
+</p>
+
+@inject AuthClientService AuthClient
+@inject NavigationManager Navigation
+
+@code {
+    private string _email = string.Empty;
+    private string _password = string.Empty;
+    private string? _error;
+    private bool _isLoading;
+
+    private async Task HandleLogin()
+    {
+        _error = null;
+        _isLoading = true;
+
+        var result = await AuthClient.LoginAsync(_email, _password);
+
+        if (result.IsSuccess)
+        {
+            Navigation.NavigateTo("/categories");
+        }
+        else
+        {
+            _error = result.ErrorMessage;
+        }
+
+        _isLoading = false;
+    }
+}

@@ -1,0 +1,91 @@
+@page "/books"
+
+<PageTitle>Books</PageTitle>
+
+<h1>Books</h1>
+
+@if (!AuthState.IsAuthenticated)
+{
+    <p>You must <a href="login">login</a> to view this page.</p>
+}
+else if (_isLoading)
+{
+    <p>Loading books...</p>
+}
+else if (_loadError is not null)
+{
+    <p style="color: red;">Error: @_loadError</p>
+}
+else if (_books is null || _books.Count == 0)
+{
+    <p>No books yet.</p>
+}
+else
+{
+    <table style="border-collapse: collapse; width: 100%;">
+        <thead>
+            <tr style="background: #f0f0f0;">
+                <th style="padding: 0.5rem; text-align: left; border: 1px solid #ddd;">Id</th>
+                <th style="padding: 0.5rem; text-align: left; border: 1px solid #ddd;">Title</th>
+                <th style="padding: 0.5rem; text-align: left; border: 1px solid #ddd;">ISBN</th>
+                <th style="padding: 0.5rem; text-align: left; border: 1px solid #ddd;">Year</th>
+                <th style="padding: 0.5rem; text-align: left; border: 1px solid #ddd;">Category Id</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var book in _books)
+            {
+                <tr>
+                    <td style="padding: 0.5rem; border: 1px solid #ddd;">@book.Id</td>
+                    <td style="padding: 0.5rem; border: 1px solid #ddd;">@book.Title</td>
+                    <td style="padding: 0.5rem; border: 1px solid #ddd;">@book.Isbn</td>
+                    <td style="padding: 0.5rem; border: 1px solid #ddd;">@book.PublicationYear</td>
+                    <td style="padding: 0.5rem; border: 1px solid #ddd;">@book.CategoryId</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@inject HttpClient Http
+@inject AuthState AuthState
+@implements IDisposable
+
+@code {
+    private List<BookDto>? _books;
+    private bool _isLoading;
+    private string? _loadError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthState.OnChange += StateHasChanged;
+        if (AuthState.IsAuthenticated)
+        {
+            await LoadBooksAsync();
+        }
+    }
+
+    private async Task LoadBooksAsync()
+    {
+        _isLoading = true;
+        _loadError = null;
+
+        try
+        {
+            _books = await Http.GetFromJsonAsync<List<BookDto>>("/api/books");
+        }
+        catch (Exception ex)
+        {
+            _loadError = ex.Message;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        AuthState.OnChange -= StateHasChanged;
+    }
+}

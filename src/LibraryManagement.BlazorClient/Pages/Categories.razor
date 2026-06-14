@@ -1,0 +1,154 @@
+@page "/categories"
+
+<PageTitle>Categories</PageTitle>
+
+<h1>Categories</h1>
+
+@if (!AuthState.IsAuthenticated)
+{
+    <p>You must <a href="login">login</a> to view this page.</p>
+}
+else
+{
+    <div style="margin-bottom: 2rem;">
+        <h3>Create new category</h3>
+        <div style="margin-bottom: 0.5rem;">
+            <input type="text" placeholder="Name" @bind="_newName" style="width: 250px; padding: 0.4rem;" />
+            <input type="text" placeholder="Description (optional)" @bind="_newDescription" style="width: 350px; padding: 0.4rem;" />
+            <button @onclick="HandleCreate" disabled="@_isCreating" style="padding: 0.4rem 0.8rem;">
+                @(_isCreating ? "Creating..." : "Create")
+            </button>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(_createError))
+        {
+            <div style="color: red;">@_createError</div>
+        }
+    </div>
+
+    @if (_isLoading)
+    {
+        <p>Loading categories...</p>
+    }
+    else if (_loadError is not null)
+    {
+        <p style="color: red;">Error: @_loadError</p>
+    }
+    else if (_categories is null || _categories.Count == 0)
+    {
+        <p>No categories yet.</p>
+    }
+    else
+    {
+        <table style="border-collapse: collapse; width: 100%;">
+            <thead>
+                <tr style="background: #f0f0f0;">
+                    <th style="padding: 0.5rem; text-align: left; border: 1px solid #ddd;">Id</th>
+                    <th style="padding: 0.5rem; text-align: left; border: 1px solid #ddd;">Name</th>
+                    <th style="padding: 0.5rem; text-align: left; border: 1px solid #ddd;">Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var cat in _categories)
+                {
+                    <tr>
+                        <td style="padding: 0.5rem; border: 1px solid #ddd;">@cat.Id</td>
+                        <td style="padding: 0.5rem; border: 1px solid #ddd;">@cat.Name</td>
+                        <td style="padding: 0.5rem; border: 1px solid #ddd;">@cat.Description</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@inject HttpClient Http
+@inject AuthState AuthState
+@implements IDisposable
+
+@code {
+    private List<CategoryDto>? _categories;
+    private bool _isLoading;
+    private string? _loadError;
+
+    private string _newName = string.Empty;
+    private string _newDescription = string.Empty;
+    private bool _isCreating;
+    private string? _createError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthState.OnChange += StateHasChanged;
+        if (AuthState.IsAuthenticated)
+        {
+            await LoadCategoriesAsync();
+        }
+    }
+
+    private async Task LoadCategoriesAsync()
+    {
+        _isLoading = true;
+        _loadError = null;
+
+        try
+        {
+            _categories = await Http.GetFromJsonAsync<List<CategoryDto>>("/api/categories");
+        }
+        catch (Exception ex)
+        {
+            _loadError = ex.Message;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task HandleCreate()
+    {
+        _createError = null;
+        _isCreating = true;
+
+        try
+        {
+            var dto = new CreateCategoryDto
+            {
+                Name = _newName,
+                Description = string.IsNullOrWhiteSpace(_newDescription) ? null : _newDescription
+            };
+
+            var response = await Http.PostAsJsonAsync("/api/categories", dto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                _newName = string.Empty;
+                _newDescription = string.Empty;
+                await LoadCategoriesAsync();
+            }
+            else if ((int)response.StatusCode == 403)
+            {
+                _createError = "You don't have permission to create categories (requires Librarian or Admin role).";
+            }
+            else if ((int)response.StatusCode == 409)
+            {
+                _createError = "A category with that name already exists.";
+            }
+            else
+            {
+                _createError = $"Server returned {(int)response.StatusCode}.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _createError = ex.Message;
+        }
+        finally
+        {
+            _isCreating = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        AuthState.OnChange -= StateHasChanged;
+    }
+}

@@ -1,0 +1,61 @@
+@page "/api-test"
+@inject HttpClient Http
+
+<PageTitle>API Connection Test</PageTitle>
+
+<h1>API Connection Test</h1>
+
+<p>Esta página intenta llamar a la WebApi para verificar:</p>
+<ul>
+    <li>Que la URL en appsettings.json está bien configurada.</li>
+    <li>Que CORS en la WebApi autoriza este origen.</li>
+    <li>Que la WebApi está corriendo.</li>
+</ul>
+
+<button @onclick="TestConnection" disabled="@_isLoading">
+    @(_isLoading ? "Probando..." : "Probar conexión")
+</button>
+
+@if (_result is not null)
+{
+    <div style="margin-top: 1rem; padding: 1rem; border: 1px solid; background: @(_isSuccess ? "#d4edda" : "#f8d7da");">
+        <strong>Resultado:</strong> @_result
+    </div>
+}
+
+@code {
+    private string? _result;
+    private bool _isLoading;
+    private bool _isSuccess;
+
+    private async Task TestConnection()
+    {
+        _isLoading = true;
+        _result = null;
+        StateHasChanged();
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync(
+                "/api/auth/login",
+                new { Email = "test@test.com", Password = "x" });
+
+            _result = $"Conexión OK. Status devuelto: {(int)response.StatusCode} {response.StatusCode}.";
+            _isSuccess = true;
+        }
+        catch (HttpRequestException ex)
+        {
+            _result = $"Error de conexión: {ex.Message}. Revisa que la API esté corriendo y que CORS esté configurado.";
+            _isSuccess = false;
+        }
+        catch (Exception ex)
+        {
+            _result = $"Error inesperado: {ex.Message}";
+            _isSuccess = false;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+}

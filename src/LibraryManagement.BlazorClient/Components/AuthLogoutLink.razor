@@ -1,0 +1,28 @@
+@using LibraryManagement.BlazorClient.Services
+@inject AuthState AuthState
+@inject AuthClientService AuthClient
+@inject NavigationManager Navigation
+@implements IDisposable
+
+@if (AuthState.IsAuthenticated)
+{
+    <a href="#" @onclick="HandleLogout" @onclick:preventDefault>Logout</a>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        AuthState.OnChange += StateHasChanged;
+    }
+
+    private async Task HandleLogout()
+    {
+        await AuthClient.LogoutAsync();
+        Navigation.NavigateTo("/login");
+    }
+
+    public void Dispose()
+    {
+        AuthState.OnChange -= StateHasChanged;
+    }
+}
