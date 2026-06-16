@@ -207,15 +207,60 @@ Open `https://localhost:7167` in your browser.
 4. Logout, login again → your new token has the `Administrator` role.
 5. Create categories and view books.
 
-**Promote a user to Administrator**:
-```sql
+### Common testing commands
+
+Helpful snippets when running the project locally.
+
+**Promote a user to Administrator** (so you can test endpoints that require the `LibrarianOrAdmin` or `AdminOnly` policy):
+
+```powershell
+sqlcmd -S "localhost,1433" -U sa -P "Strong!Passw0rd" -C -I -d LibraryDb -Q @"
 DECLARE @userId NVARCHAR(450) = (SELECT Id FROM dbo.AspNetUsers WHERE Email = 'your@email.com');
 DECLARE @readerRoleId NVARCHAR(450) = (SELECT Id FROM dbo.AspNetRoles WHERE Name = 'Reader');
 DECLARE @adminRoleId NVARCHAR(450) = (SELECT Id FROM dbo.AspNetRoles WHERE Name = 'Administrator');
 
 DELETE FROM dbo.AspNetUserRoles WHERE UserId = @userId AND RoleId = @readerRoleId;
 INSERT INTO dbo.AspNetUserRoles (UserId, RoleId) VALUES (@userId, @adminRoleId);
+
+SELECT u.Email, r.Name AS Role
+FROM dbo.AspNetUsers u
+JOIN dbo.AspNetUserRoles ur ON u.Id = ur.UserId
+JOIN dbo.AspNetRoles r ON r.Id = ur.RoleId;
+"@
 ```
+
+Replace `'your@email.com'` with the email you registered. After running it, **logout and login again** in the Blazor client to receive a JWT with the new role (claims are cached in the token, so the existing access token still has the old role).
+
+> Note: the `-I` flag is required because soft-delete tables use filtered unique indexes, which need `SET QUOTED_IDENTIFIER ON`.
+
+**Reset the database** (clears users, refresh tokens, categories, and books — useful between test runs):
+
+```powershell
+sqlcmd -S "localhost,1433" -U sa -P "Strong!Passw0rd" -C -I -d LibraryDb -Q @"
+DELETE FROM dbo.RefreshTokens;
+DELETE FROM dbo.AspNetUserRoles;
+DELETE FROM dbo.AspNetUserClaims;
+DELETE FROM dbo.AspNetUserLogins;
+DELETE FROM dbo.AspNetUserTokens;
+DELETE FROM dbo.AspNetUsers;
+DELETE FROM dbo.Books;
+DELETE FROM dbo.Categories;
+
+SELECT
+    (SELECT COUNT(*) FROM dbo.AspNetUsers) AS Users,
+    (SELECT COUNT(*) FROM dbo.RefreshTokens) AS Tokens,
+    (SELECT COUNT(*) FROM dbo.Categories) AS Categories,
+    (SELECT COUNT(*) FROM dbo.Books) AS Books;
+"@
+```
+
+The seeded roles (`Administrator`, `Librarian`, `Reader`) and catalog tables (`CopyStatus`, `LoanStatus`) are preserved — only your test data is removed.
+
+**Stop services**:
+
+- Press `Ctrl+C` in each terminal running `dotnet run`.
+- To stop SQL Server: `docker compose -f database/docker-compose.yml stop sqlserver`.
+- To stop **and remove all data** (full reset, including schema): `docker compose -f database/docker-compose.yml down -v` — destructive, requires re-running migrations.
 
 ### Switch between EF Core and ADO.NET
 
