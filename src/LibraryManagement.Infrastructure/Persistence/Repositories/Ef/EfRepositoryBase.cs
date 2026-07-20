@@ -40,7 +40,9 @@ public abstract class EfRepositoryBase<TDomain, TDataModel, TId> : IRepository<T
     public virtual async Task<TDomain?> GetByIdAsync(TId id, CancellationToken cancellationToken = default)
     {
         var dataModel = await Set.FindAsync(new object[] { id }, cancellationToken);
-        return dataModel is null ? null : _toDomain(dataModel);
+        if (dataModel is null) return null;
+        Db.Entry(dataModel).State = EntityState.Detached;
+        return _toDomain(dataModel);
     }
 
     public virtual async Task<IReadOnlyList<TDomain>> ListAsync(CancellationToken cancellationToken = default)
