@@ -75,7 +75,7 @@ public class AuthMessageHandler : DelegatingHandler
     private static bool IsAuthEndpoint(HttpRequestMessage request)
     {
         var path = request.RequestUri?.AbsolutePath ?? string.Empty;
-        return path.StartsWith("/api/auth", StringComparison.OrdinalIgnoreCase);
+        return path.StartsWith("/api/auth/", StringComparison.OrdinalIgnoreCase);
     }
 
     private async Task<bool> TryRefreshTokenAsync(CancellationToken cancellationToken)
