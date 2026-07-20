@@ -1,0 +1,223 @@
+@page "/authors"
+
+<PageTitle>Authors</PageTitle>
+
+<h1>Authors</h1>
+
+@if (!AuthState.IsAuthenticated)
+{
+    <p>You must <a href="login">login</a> to view this page.</p>
+}
+else
+{
+    <div style="margin-bottom: 2rem;">
+        <h3>Create new author</h3>
+        <div style="margin-bottom: 0.5rem;">
+            <input type="text" placeholder="First Name" @bind="_newFirstName" style="width: 250px; padding: 0.4rem;" />
+            <input type="text" placeholder="Last Name" @bind="_newLastName" style="width: 250px; padding: 0.4rem;" />
+            <input type="text" placeholder="Date of Birth" @bind="_newDOB" style="width: 250px; padding: 0.4rem;" />
+            <input type="text" placeholder="Biography (optional)" @bind="_newBiography" style="width: 350px; padding: 0.4rem;" />
+            <button @onclick="HandleCreate" disabled="@_isCreating" style="padding: 0.4rem 0.8rem;">
+                @(_isCreating ? "Creating..." : "Create")
+            </button>
+            <br />
+            <input type="text" placeholder="Search ID" @bind="_newId" style="width: 350px; padding: 0.4rem;" />
+            <button @onclick="HandleUpdate" disabled="@_isUpdating" style="padding: 0.4rem 0.8rem;">
+                @(_isUpdating ? "Updating..." : "Update")
+            </button>
+            <button @onclick="HandleGet" style="padding: 0.4rem 0.8rem;">
+                @(_isUpdating ? "Getting..." : "Get")
+            </button>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(_createError))
+        {
+            <div style="color: red;">@_createError</div>
+        }
+    </div>
+
+    @if (_isLoading)
+    {
+        <p>Loading authors...</p>
+    }
+    else if (_loadError is not null)
+    {
+        <p style="color: red;">Error: @_loadError</p>
+    }
+    else if (_authors is null || _authors.Count == 0)
+    {
+        <p>No authors yet.</p>
+    }
+    else
+    {
+        <table style="border-collapse: collapse; width: 100%;">
+            <thead>
+                <tr style="background: #f0f0f0;">
+                    <th style="padding: 0.5rem; text-align: left; border: 1px solid #ddd;">Id</th>
+                    <th style="padding: 0.5rem; text-align: left; border: 1px solid #ddd;">Name</th>
+                    <th style="padding: 0.5rem; text-align: left; border: 1px solid #ddd;">Date Of Birth</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var author in _authors)
+                {
+                    <tr>
+                        <td style="padding: 0.5rem; border: 1px solid #ddd;">@author.Id</td>
+                        <td style="padding: 0.5rem; border: 1px solid #ddd;">@author.FirstName</td>
+                        <td style="padding: 0.5rem; border: 1px solid #ddd;">@author.DateOfBirth</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <hr>
+
+
+}
+
+@inject HttpClient Http
+@inject AuthState AuthState
+@implements IDisposable
+
+@code {
+    private List<AuthorDto>? _authors;
+    private bool _isLoading;
+    private string? _loadError;
+
+    private string _newId = string.Empty;
+    private string _newFirstName = string.Empty;
+    private string _newLastName = string.Empty;
+    private string _newBiography = string.Empty;
+    private string _newDOB = string.Empty;
+    private bool _isCreating;
+    private bool _isUpdating;
+    private string? _createError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthState.OnChange += StateHasChanged;
+        if (AuthState.IsAuthenticated)
+        {
+            await LoadAuthorsAsync();
+        }
+    }
+
+    private async Task LoadAuthorsAsync()
+    {
+        _isLoading = true;
+        _loadError = null;
+
+        try
+        {
+            _authors = await Http.GetFromJsonAsync<List<AuthorDto>>("/api/authors");
+        }
+        catch (Exception ex)
+        {
+            _loadError = ex.Message;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    } 
+
+    private async Task HandleCreate()
+    {
+        _isCreating = true;
+        _createError = null;
+        CreateAuthorDto dto = new CreateAuthorDto(
+		    firstName: _newFirstName ,
+    		lastName: _newLastName ,
+    		dateOfBirth: string.IsNullOrEmpty(_newDOB) ? null : DateOnly.Parse(_newDOB), 
+    		biography: _newBiography 
+	    );
+
+        var response = await Http.PostAsJsonAsync("/api/authors", dto);
+
+        if (response.IsSuccessStatusCode)
+        {
+            _newFirstName = string.Empty;
+            _newLastName = string.Empty;
+            _newDOB = string.Empty;
+            _newBiography = string.Empty;
+            _isCreating = false;
+            await LoadAuthorsAsync();
+        }
+        else if ((int)response.StatusCode == 403)
+        {
+            _createError = "You don't have permission to create authors (requires Librarian or Admin role).";
+        }
+        else
+        {
+            _createError = $"Server returned {(int)response.StatusCode}.";
+        }
+
+    }
+
+    private async Task HandleUpdate()
+    {
+        
+        _isUpdating = true;
+        UpdateAuthorDto dto = new UpdateAuthorDto(
+            firstName: _newFirstName,
+            lastName: _newLastName,
+            dateOfBirth: string.IsNullOrEmpty(_newDOB) ? null : DateOnly.Parse(_newDOB),
+            biography: _newBiography
+        );
+        //request
+        var response = await Http.PutAsJsonAsync($"/api/authors/{_newId}", dto);
+
+        if (response.IsSuccessStatusCode)
+        {
+            _newFirstName = string.Empty;
+            _newLastName = string.Empty;
+            _newDOB = string.Empty;
+            _newBiography = string.Empty;
+            _isUpdating = false;
+            await LoadAuthorsAsync();
+        }
+        else if ((int)response.StatusCode == 403)
+        {
+            _createError = "You don't have permission to update authors (requires Librarian or Admin role).";
+        }
+        else
+        {
+            _createError = $"Server returned {(int)response.StatusCode}.";
+        }
+
+    }
+
+    private async Task HandleGet()
+    {
+        var response = await Http.GetAsync($"/api/authors/{_newId}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            var author = await response.Content.ReadFromJsonAsync<AuthorDto>();
+            if (author != null)
+            {
+                _newFirstName = author.FirstName;
+                _newLastName = author.LastName;
+                _newDOB = author.DateOfBirth?.ToString() ?? string.Empty;
+                _newBiography = author.Biography ?? string.Empty;
+            }
+        }
+        else if ((int)response.StatusCode == 403)
+        {
+            _createError = "You don't have permission to get authors (requires Librarian or Admin role).";
+        }
+        else if ((int)response.StatusCode == 404)
+        {
+            _createError = "Author not found.";
+        }
+        else
+        {
+            _createError = $"Server returned {(int)response.StatusCode}.";
+        }
+    }
+
+    public void Dispose()
+    {
+        AuthState.OnChange -= StateHasChanged;
+    }
+}
