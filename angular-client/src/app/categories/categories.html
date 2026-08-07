@@ -1,0 +1,9 @@
+<h1>Categories</h1>
+
+@if (categories$ | async; as categories) {
+  <ul>
+    @for (category of categories; track category.id) {
+      <li>{{ category.name }} — {{ category.description }}</li>
+    }
+  </ul>
+}
