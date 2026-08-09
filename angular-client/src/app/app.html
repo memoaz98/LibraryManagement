@@ -1,7 +1,13 @@
 <nav>
   <a routerLink="" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
-  <br>
   <a routerLink="categories" routerLinkActive="active">Categories</a>
+
+  @if (authState.isAuthenticated()) {
+    <button type="button" (click)="logout()">Logout</button>
+  } @else {
+    <a routerLink="login" routerLinkActive="active">Login</a>
+    <a routerLink="register" routerLinkActive="active">Register</a>
+  }
 </nav>
 
 <main>
