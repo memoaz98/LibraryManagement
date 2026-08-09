@@ -1,0 +1,31 @@
+<div class="backdrop" (click)="close.emit()">
+  <div class="dialog" (click)="$event.stopPropagation()">
+    <h2>Edit category</h2>
+
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <label>
+        Name
+        <input type="text" formControlName="name" />
+      </label>
+      <label>
+        Description
+        <input type="text" formControlName="description" />
+      </label>
+
+      @if (error()) {
+        <p class="error">{{ error() }}</p>
+      }
+
+      <div class="actions">
+        <button type="submit" [disabled]="isSaving()">
+          {{ isSaving() ? 'Saving...' : 'Save' }}
+        </button>
+        <button type="button" class="danger" [disabled]="isDeleting()" (click)="remove()">
+          {{ isDeleting() ? 'Deleting...' : 'Delete' }}
+        </button>
+
+        <button type="button" (click)="close.emit()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>

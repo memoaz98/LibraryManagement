@@ -1,9 +1,42 @@
 <h1>Categories</h1>
 
-@if (categories$ | async; as categories) {
-  <ul>
-    @for (category of categories; track category.id) {
-      <li>{{ category.name }} — {{ category.description }}</li>
-    }
-  </ul>
+<form [formGroup]="form" (ngSubmit)="submit()" class="create-form">
+  <input type="text" formControlName="name" placeholder="Name" />
+  <input type="text" formControlName="description" placeholder="Description (optional)" />
+  <button type="submit" [disabled]="isCreating()">
+    {{ isCreating() ? 'Creating...' : 'Create' }}
+  </button>
+</form>
+
+@if (error()) {
+  <p class="error">{{ error() }}</p>
 }
+
+<table style="border-collapse: collapse; width: 100%; font-family: system-ui, -apple-system, sans-serif; font-size: 14px; text-align: left; margin: 16px 0;">
+  <thead style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+    <th>Name</th>
+    <th>Description</th>
+  </thead>
+    @for (category of categories(); track category.id) {
+    <tr (dblclick)="openDetail(category)">
+      <td>{{ category.name }}</td>
+      <td>{{ category.description }}</td>
+      <td><button type="button" (click)="openDetail(category)">View</button></td>
+    </tr>
+  } @empty {
+    <tr>
+      <td>No categories yet.</td>
+    </tr>
+  }
+</table>
+
+@if (selectedCategory(); as selected) {
+  <app-category-detail
+    [category]="selected"
+    (close)="closeDetail()"
+    (saved)="refreshAndClose()"
+    (deleted)="refreshAndClose()"
+  />
+}
+
+
