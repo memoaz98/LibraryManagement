@@ -45,4 +45,12 @@ export class Login {
       },
     });
   }
+
+  testCredentials(): void {
+    this.form.setValue({
+      email: 'guille@test.com',
+      password: 'Test1234!',
+    });
+  }
+
 }

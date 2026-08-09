@@ -15,6 +15,12 @@
     {{ isLoading() ? 'Logging in...' : 'Login' }}
   </button>
 
+  <br>
+
+  <button [disabled]="isLoading()" type="submit" (click)="testCredentials()">
+    Credenciales de prueba
+  </button>
+
   @if (error()) {
     <p class="error">{{ error() }}</p>
   }
