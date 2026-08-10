@@ -1,0 +1,39 @@
+<h1>Books</h1>
+
+<form [formGroup]="form" (ngSubmit)="submit()" class="create-form">
+  <input type="text" formControlName="title" placeholder="Title" />
+  <input type="text" formControlName="isbn" placeholder="ISBN (13 digits)" />
+  <input type="number" formControlName="publicationYear" placeholder="Year" />
+  <select formControlName="categoryId">
+    <option [ngValue]="null" disabled>Select a category</option>
+    @for (category of categories(); track category.id) {
+      <option [ngValue]="category.id">{{ category.name }}</option>
+    }
+  </select>
+  <input type="text" formControlName="synopsis" placeholder="Synopsis (optional)" />
+  <button type="submit" [disabled]="isCreating()">
+    {{ isCreating() ? 'Creating...' : 'Create' }}
+  </button>
+</form>
+
+@if (error()) {
+  <p class="error">{{ error() }}</p>
+}
+
+<table>
+  <thead>
+    <tr><th>Title</th><th>ISBN</th><th>Year</th><th>Category</th></tr>
+  </thead>
+  <tbody>
+    @for (book of books(); track book.id) {
+      <tr>
+        <td>{{ book.title }}</td>
+        <td>{{ book.isbn }}</td>
+        <td>{{ book.publicationYear }}</td>
+        <td>{{ categoriesById().get(book.categoryId) ?? book.categoryId }}</td>
+      </tr>
+    } @empty {
+      <tr><td colspan="4">No books yet.</td></tr>
+    }
+  </tbody>
+</table>
