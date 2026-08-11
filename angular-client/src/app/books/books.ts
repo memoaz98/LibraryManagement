@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { BookApi } from './book-api';
 import { Book } from './book.model';
+import { isbn13Validator } from './isbn.validator';
 import { CreateBook } from './create-book.model';
 import { CategoryApi } from '../categories/category-api';
 import { Category } from '../categories/category.model';
@@ -34,11 +35,15 @@ export class Books {
 
   protected readonly form = this.formBuilder.group({
     title: ['', [Validators.required, Validators.maxLength(255)]],
-    isbn: ['', [Validators.required, Validators.pattern(/^\d{13}$/)]],
+    isbn: ['', [Validators.required, Validators.pattern(/^\d{13}$/), isbn13Validator]],
     publicationYear: [null as number | null, [Validators.required, Validators.min(1450), Validators.max(this.maxYear)]],
     categoryId: [null as number | null, [Validators.required]],
     synopsis: [''],
   });
+
+  protected readonly isbnControl = this.form.controls.isbn;
+
+
 
   constructor() {
     this.loadBooks();

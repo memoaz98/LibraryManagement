@@ -2,7 +2,25 @@
 
 <form [formGroup]="form" (ngSubmit)="submit()" class="create-form">
   <input type="text" formControlName="title" placeholder="Title" />
-  <input type="text" formControlName="isbn" placeholder="ISBN (13 digits)" />
+  <input
+    type="text"
+    formControlName="isbn"
+    placeholder="ISBN (13 digits)"
+    [attr.aria-invalid]="isbnControl.touched && isbnControl.invalid"
+    [attr.aria-describedby]="isbnControl.touched && isbnControl.invalid ? 'isbn-error' : null"
+  />
+  @if (isbnControl.touched && isbnControl.invalid) {
+    <small id="isbn-error" class="field-error">
+      @if (isbnControl.hasError('required')) {
+        ISBN is required.
+      } @else if (isbnControl.hasError('pattern')) {
+        ISBN must be exactly 13 digits.
+      } @else if (isbnControl.hasError('isbn13')) {
+        Invalid ISBN-13: the check digit does not match.
+      }
+    </small>
+  }
+
   <input type="number" formControlName="publicationYear" placeholder="Year" />
   <select formControlName="categoryId">
     <option [ngValue]="null" disabled>Select a category</option>
