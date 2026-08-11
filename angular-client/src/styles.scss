@@ -1,1 +1,39 @@
 /* You can add global styles to this file, and also import other style files */
+/* Global styles: these are NOT view-encapsulated, so bare element selectors
+   reach the templates of every component in the app. */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+th,
+td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+th {
+  background: #f1f3f5;
+  color: #1f2933;
+  font-weight: 600;
+  border-bottom: 2px solid #adb5bd;
+}
+
+tbody tr:hover {
+  background: #f8f9fa;
+}
+
+/* Shared form feedback, also used by every component. */
+.error {
+  color: #b42318;
+}
+
+.field-error {
+  display: block;
+  color: #b42318;
+  font-size: 0.8rem;
+}

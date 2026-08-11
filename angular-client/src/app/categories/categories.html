@@ -12,23 +12,29 @@
   <p class="error">{{ error() }}</p>
 }
 
-<table style="border-collapse: collapse; width: 100%; font-family: system-ui, -apple-system, sans-serif; font-size: 14px; text-align: left; margin: 16px 0;">
-  <thead style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-    <th>Name</th>
-    <th>Description</th>
-  </thead>
-    @for (category of categories(); track category.id) {
-    <tr (dblclick)="openDetail(category)">
-      <td>{{ category.name }}</td>
-      <td>{{ category.description }}</td>
-      <td><button type="button" (click)="openDetail(category)">View</button></td>
-    </tr>
-  } @empty {
+<table>
+  <thead>
     <tr>
-      <td>No categories yet.</td>
+      <th>Name</th>
+      <th>Description</th>
+      <th>Actions</th>
     </tr>
-  }
+  </thead>
+  <tbody>
+    @for (category of categories(); track category.id) {
+      <tr (dblclick)="openDetail(category)">
+        <td>{{ category.name }}</td>
+        <td>{{ category.description }}</td>
+        <td><button type="button" (click)="openDetail(category)">View</button></td>
+      </tr>
+    } @empty {
+      <tr>
+        <td colspan="3">No categories yet.</td>
+      </tr>
+    }
+  </tbody>
 </table>
+
 
 @if (selectedCategory(); as selected) {
   <app-category-detail
