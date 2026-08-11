@@ -42,6 +42,34 @@ services:
     profiles:
       - tools
 
+  # ⚠️ SOLO DESARROLLO LOCAL — siembra datos de prueba, incluido un usuario
+  # con contraseña conocida y rol Administrator. Aislado en su propio profile
+  # (`seed`) y con tabla de historial separada para no contaminar el
+  # versionado real del esquema. Nunca ejecutar contra un ambiente compartido.
+  flyway-seed:
+    image: flyway/flyway:10-alpine
+    container_name: library-flyway-seed
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    command:
+      - "-url=jdbc:sqlserver://library-sqlserver:1433;databaseName=LibraryDb;encrypt=true;trustServerCertificate=true"
+      - "-user=sa"
+      - "-password=Strong!Passw0rd"
+      - "-locations=filesystem:/flyway/sql"
+      - "-table=flyway_seed_history"
+      - "-baselineOnMigrate=true"
+      # baselineVersion=0 es imprescindible: el esquema dbo ya tiene objetos
+      # creados por las migraciones reales, así que Flyway haría baseline en
+      # la versión 1 por defecto y saltaría V001 sin ejecutarlo nunca.
+      - "-baselineVersion=0"
+      - "-validateMigrationNaming=true"
+      - "migrate"
+    volumes:
+      - ./seed-dev:/flyway/sql:ro
+    profiles:
+      - seed
+
 volumes:
   sqlserver-data:
     name: library-sqlserver-data
