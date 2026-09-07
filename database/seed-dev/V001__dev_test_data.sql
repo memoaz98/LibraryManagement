@@ -107,3 +107,61 @@ BEGIN
     INSERT INTO dbo.AspNetUserRoles (UserId, RoleId)
     VALUES (@UserId, @AdminRoleId);
 END
+
+
+-- =============================================================================
+-- SECCIÓN 4 — Libros de prueba
+-- =============================================================================
+-- Inserta unos libros de desarrollo. Idempotente: cada ISBN se comprueba antes
+-- de insertar. Las categorías se referencian por su Name (se sembraron en la
+-- Sección 1), por lo que este script funciona aunque los Ids cambien.
+-- =============================================================================
+
+DECLARE @CatFic INT = (SELECT Id FROM dbo.Categories WHERE Name = N'Ficción');
+DECLARE @CatCiencia INT = (SELECT Id FROM dbo.Categories WHERE Name = N'Ciencia y Tecnología');
+DECLARE @CatHistoria INT = (SELECT Id FROM dbo.Categories WHERE Name = N'Historia');
+
+-- 1) La carretera (ficción)
+IF @CatFic IS NOT NULL AND NOT EXISTS (SELECT 1 FROM dbo.Books WHERE ISBN = '9780307277671')
+BEGIN
+    INSERT INTO dbo.Books (CategoryId, Title, ISBN, PublicationYear, Synopsis, IsDeleted, CreatedAt)
+    VALUES (
+        @CatFic,
+        N'La carretera',
+        '9780307277671',
+        2006,
+        N'Una novela postapocalíptica que sigue a un padre y su hijo en un mundo devastado.',
+        0,
+        SYSUTCDATETIME()
+    );
+END
+
+-- 2) Clean Code (ciencia y tecnología / programación)
+IF @CatCiencia IS NOT NULL AND NOT EXISTS (SELECT 1 FROM dbo.Books WHERE ISBN = '9780132350884')
+BEGIN
+    INSERT INTO dbo.Books (CategoryId, Title, ISBN, PublicationYear, Synopsis, IsDeleted, CreatedAt)
+    VALUES (
+        @CatCiencia,
+        N'Clean Code: A Handbook of Agile Software Craftsmanship',
+        '9780132350884',
+        2008,
+        N'Buenas prácticas y ejemplos para escribir código legible y mantenible.',
+        0,
+        SYSUTCDATETIME()
+    );
+END
+
+-- 3) Sapiens (historia / no ficción)
+IF @CatHistoria IS NOT NULL AND NOT EXISTS (SELECT 1 FROM dbo.Books WHERE ISBN = '9780062316097')
+BEGIN
+    INSERT INTO dbo.Books (CategoryId, Title, ISBN, PublicationYear, Synopsis, IsDeleted, CreatedAt)
+    VALUES (
+        @CatHistoria,
+        N'Sapiens: De animales a dioses',
+        '9780062316097',
+        2015,
+        N'Un recorrido por la historia de la humanidad, desde los orígenes hasta la era moderna.',
+        0,
+        SYSUTCDATETIME()
+    );
+END
