@@ -1,0 +1,42 @@
+<div class="backdrop" (click)="close.emit()">
+  <div class="dialog" (click)="$event.stopPropagation()">
+    <h2>Edit book</h2>
+
+    <label>
+      Title
+      <input type="text" [(ngModel)]="editable.title" />
+    </label>
+    <label>
+      ISBN
+      <input type="text" [(ngModel)]="editable.isbn" />
+    </label>
+    <label>
+      Year
+      <input type="number" [(ngModel)]="editable.publicationYear" />
+    </label>
+    <label>
+      Category
+      <select [(ngModel)]="editable.categoryId">
+        <option [ngValue]="null" disabled>Select a category</option>
+        @for (category of categories(); track category.id) {
+          <option [ngValue]="category.id">{{ category.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Synopsis
+      <input type="text" [(ngModel)]="editable.synopsis" />
+    </label>
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+
+    <div class="actions">
+      <button type="button" [disabled]="isSaving()" (click)="save()">
+        {{ isSaving() ? 'Saving...' : 'Save' }}
+      </button>
+      <button type="button" (click)="close.emit()">Cancel</button>
+    </div>
+  </div>
+</div>

@@ -32,6 +32,7 @@
   <button type="submit" [disabled]="isCreating()">
     {{ isCreating() ? 'Creating...' : 'Create' }}
   </button>
+  <button type="button" (click)="clearForm()" [disabled]="isCreating()">Clear</button>
 </form>
 
 @if (error()) {
@@ -40,18 +41,29 @@
 
 <table>
   <thead>
-    <tr><th>Title</th><th>ISBN</th><th>Year</th><th>Category</th></tr>
+    <tr><th>Title</th><th>ISBN</th><th>Year</th><th>Category</th><th>Actions</th></tr>
   </thead>
   <tbody>
     @for (book of books(); track book.id) {
-      <tr>
+      <tr (dblclick)="openDetail(book)">
         <td>{{ book.title }}</td>
         <td>{{ book.isbn }}</td>
         <td>{{ book.publicationYear }}</td>
         <td>{{ categoriesById().get(book.categoryId) ?? book.categoryId }}</td>
+        <td><button type="button" (click)="openDetail(book)">View</button></td>
       </tr>
     } @empty {
       <tr><td colspan="4">No books yet.</td></tr>
     }
   </tbody>
 </table>
+
+@if (selectedBook(); as selected) {
+  <app-book-detail
+    [book]="selected"
+    [categories]="categories()"
+    (close)="closeDetail()"
+    (saved)="refreshAndClose()"
+  />
+}
+

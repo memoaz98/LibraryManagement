@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { BookApi } from './book-api';
 import { Book } from './book.model';
+import { BookDetail } from './book-detail/book-detail';
 import { isbn13Validator } from './isbn.validator';
 import { CreateBook } from './create-book.model';
 import { CategoryApi } from '../categories/category-api';
@@ -9,7 +10,7 @@ import { Category } from '../categories/category.model';
 
 @Component({
   selector: 'app-books',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, BookDetail],
   templateUrl: './books.html',
   styleUrl: './books.scss',
 })
@@ -33,6 +34,8 @@ export class Books {
     return map;
   });
 
+  protected readonly selectedBook = signal<Book | null>(null);
+
   protected readonly form = this.formBuilder.group({
     title: ['', [Validators.required, Validators.maxLength(255)]],
     isbn: ['', [Validators.required, Validators.pattern(/^\d{13}$/), isbn13Validator]],
@@ -42,8 +45,6 @@ export class Books {
   });
 
   protected readonly isbnControl = this.form.controls.isbn;
-
-
 
   constructor() {
     this.loadBooks();
@@ -61,6 +62,24 @@ export class Books {
       next: (categories) => this.categories.set(categories),
     });
   }
+
+  openDetail(book: Book): void {
+    this.selectedBook.set(book);
+  }
+
+  closeDetail(): void {
+    this.selectedBook.set(null);
+  }
+
+  clearForm(): void {
+    this.form.reset();
+  }
+
+  refreshAndClose(): void {
+    this.closeDetail();
+    this.loadBooks();
+  }
+
 
   submit(): void {
     if (this.form.invalid) {
