@@ -1,8 +1,11 @@
 using LibraryManagement.Application.Auth;
 using LibraryManagement.Application.Auth.Interfaces;
+using LibraryManagement.Application.Loans;
+using LibraryManagement.Application.Loans.Interfaces;
 using LibraryManagement.Domain.Interfaces;
 using LibraryManagement.Infrastructure.Auth;
 using LibraryManagement.Infrastructure.Persistence;
+using LibraryManagement.Infrastructure.Persistence.Queries;
 using LibraryManagement.Infrastructure.Persistence.Repositories.Ado;
 using LibraryManagement.Infrastructure.Persistence.Repositories.Ef;
 using Microsoft.EntityFrameworkCore;
@@ -34,11 +37,17 @@ public static class AdoNetInfrastructureServiceCollectionExtensions
         services.AddScoped<IMemberRepository, EfMemberRepository>();
         services.AddScoped<ILoanRepository, EfLoanRepository>();
 
+        services.AddScoped<ILoanQueries, EfLoanQueries>();
+
         services.AddScoped<IRefreshTokenRepository, EfRefreshTokenRepository>();
 
         services.Configure<JwtOptions>(opts =>
         {
             configuration.GetSection(JwtOptions.SectionName).Bind(opts);
+        });
+        services.Configure<LoanOptions>(opts =>
+        {
+            configuration.GetSection(LoanOptions.SectionName).Bind(opts);
         });
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 

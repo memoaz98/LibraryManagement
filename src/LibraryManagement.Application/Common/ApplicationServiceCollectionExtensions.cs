@@ -12,6 +12,9 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<BookService>();
         services.AddScoped<AuthService>();
         services.AddScoped<AuthorService>();
+        services.AddScoped<LoanService>();
+        services.AddScoped<MemberService>();
+        services.AddScoped<BookCopyService>();
 
         services.AddValidatorsFromAssembly(typeof(ApplicationServiceCollectionExtensions).Assembly);
 

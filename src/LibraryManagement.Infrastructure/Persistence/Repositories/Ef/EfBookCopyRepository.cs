@@ -29,4 +29,10 @@ public class EfBookCopyRepository
             .ToListAsync(cancellationToken);
         return dataModels.Select(BookCopyMapper.ToDomain).ToList();
     }
+
+    public async Task<IReadOnlyList<BookCopy>> ListByBookIdAsync(long bookId, CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        throw new NotImplementedException();
+    }
 }

@@ -9,4 +9,6 @@ public interface ILoanRepository : IRepository<Loan, long>
     Task<IReadOnlyList<Loan>> ListOverdueAsync(CancellationToken cancellationToken = default);
 
     Task<int> CountActiveByMemberAsync(long memberId, CancellationToken cancellationToken = default);
+
+    Task<bool> HasOpenLoanForBookAsync(long memberId, long bookId, CancellationToken cancellationToken = default);
 }

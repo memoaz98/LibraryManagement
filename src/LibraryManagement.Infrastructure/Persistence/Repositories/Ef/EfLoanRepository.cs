@@ -42,4 +42,10 @@ public class EfLoanRepository
                           && (l.StatusId == LoanStatusIds.Active || l.StatusId == LoanStatusIds.Overdue),
                 cancellationToken);
     }
+
+    public async Task<bool> HasOpenLoanForBookAsync(long memberId, long bookId, CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        throw new NotImplementedException();
+    }
 }

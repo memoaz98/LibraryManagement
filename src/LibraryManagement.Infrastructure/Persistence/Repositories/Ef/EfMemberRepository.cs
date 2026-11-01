@@ -34,4 +34,10 @@ public class EfMemberRepository
             .FirstOrDefaultAsync(m => m.UserId == userId, cancellationToken);
         return dataModel is null ? null : MemberMapper.ToDomain(dataModel);
     }
+
+    public async Task<IReadOnlyList<Member>> SearchAsync(string? searchTerm, CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        throw new NotImplementedException();
+    }
 }

@@ -9,4 +9,6 @@ public interface IMemberRepository : IRepository<Member, long>
     Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default);
 
     Task<Member?> FindByUserIdAsync(string userId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Member>> SearchAsync(string? searchTerm, CancellationToken cancellationToken = default);
 }
