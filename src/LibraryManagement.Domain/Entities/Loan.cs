@@ -41,7 +41,7 @@ public class Loan : BaseEntity<long>
         get
         {
             if (ReturnDate is not null) return false;
-            if (StatusId is CopyStatusIds.Lost) return false;
+            if (StatusId is LoanStatusIds.Lost) return false;
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
             return DueDate < today;
         }
