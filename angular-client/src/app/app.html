@@ -1,15 +1,16 @@
-<nav>
-  <a routerLink="" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
-  <a routerLink="categories" routerLinkActive="active">Categories</a>
-  <a routerLink="books" routerLinkActive="active">Books</a>
+<nav data-cy="main-nav">
+  <a routerLink="" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" data-cy="nav-home">Home</a>
+  <a routerLink="categories" routerLinkActive="active" data-cy="nav-categories">Categories</a>
+  <a routerLink="books" routerLinkActive="active" data-cy="nav-books">Books</a>
 
   @if (authState.isAuthenticated()) {
-    <button type="button" (click)="logout()">Logout</button>
+    <button type="button" (click)="logout()" data-cy="nav-logout">Logout</button>
   } @else {
-    <a routerLink="login" routerLinkActive="active">Login</a>
-    <a routerLink="register" routerLinkActive="active">Register</a>
+    <a routerLink="login" routerLinkActive="active" data-cy="nav-login">Login</a>
+    <a routerLink="register" routerLinkActive="active" data-cy="nav-register">Register</a>
   }
 </nav>
+
 
 <main>
   <router-outlet />

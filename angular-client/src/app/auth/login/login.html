@@ -1,29 +1,29 @@
 <h1>Login</h1>
 
-<form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
+<form [formGroup]="form" (ngSubmit)="submit()" class="auth-form" data-cy="login-form">
   <label>
     Email
-    <input type="email" formControlName="email" />
+    <input type="email" formControlName="email" data-cy="login-email" />
   </label>
 
   <label>
     Password
-    <input type="password" formControlName="password" />
+    <input type="password" formControlName="password" data-cy="login-password" />
   </label>
 
-  <button type="submit" [disabled]="isLoading()">
+  <button type="submit" [disabled]="isLoading()" data-cy="login-submit">
     {{ isLoading() ? 'Logging in...' : 'Login' }}
   </button>
 
   <br>
 
-  <button [disabled]="isLoading()" type="submit" (click)="testCredentials()">
+  <button [disabled]="isLoading()" type="submit" (click)="testCredentials()" data-cy="login-test-credentials">
     Credenciales de prueba
   </button>
 
   @if (error()) {
-    <p class="error">{{ error() }}</p>
+    <p class="error" data-cy="login-error">{{ error() }}</p>
   }
 </form>
 
-<p>Don't have an account? <a routerLink="/register">Register</a></p>
+<p>Don't have an account? <a routerLink="/register" data-cy="login-register-link">Register</a></p>
