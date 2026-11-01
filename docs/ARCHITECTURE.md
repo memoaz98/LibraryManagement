@@ -55,42 +55,54 @@ LibraryManagement.sln
 │
 ├── src/
 │   ├── LibraryManagement.Domain/
+│   │   ├── Common/                    ← BaseEntity (Id, CreatedAt, IsDeleted)
+│   │   ├── Constants/                 ← Catalog and role ids seeded by migration V002
 │   │   ├── Entities/                  ← Pure POCOs with behavior
-│   │   ├── ValueObjects/
-│   │   ├── Interfaces/                ← Repository and UoW contracts
 │   │   ├── Exceptions/                ← DomainException, NotFoundException
-│   │   └── Common/                    ← BaseEntity (Id, IsDeleted, CreatedAt)
+│   │   └── Interfaces/                ← Repository and UoW contracts
 │   │
 │   ├── LibraryManagement.Application/
-│   │   ├── Services/                  ← Use case orchestration
-│   │   ├── DTOs/                      ← API contracts (in/out)
-│   │   ├── Validators/                ← FluentValidation rules
+│   │   ├── Auth/                      ← JwtOptions, token result models, auth contracts
+│   │   │                                (IJwtTokenGenerator, IRefreshTokenRepository)
+│   │   ├── Common/                    ← AddApplication() registration, application exceptions
+│   │   ├── Dtos/                      ← API contracts (in/out), one folder per feature
 │   │   ├── Mappers/                   ← Domain ↔ DTO mapping
-│   │   └── Options/                   ← Typed configuration sections
+│   │   ├── Services/                  ← Use case orchestration (incl. AuthService)
+│   │   └── Validators/                ← FluentValidation rules, one folder per feature
 │   │
 │   ├── LibraryManagement.Infrastructure/
-│   │   ├── Persistence/
-│   │   │   ├── EntityFramework/       ← LibraryDbContext, EF repos, EfUnitOfWork
-│   │   │   ├── AdoNet/                ← ADO repos, AdoUnitOfWork
-│   │   │   ├── DataModels/            ← Scaffolded EF entities
-│   │   │   └── Mappers/               ← Domain ↔ DataModel mapping
-│   │   ├── Identity/                  ← Identity configuration, password options
-│   │   ├── Authentication/            ← JWT issuance, refresh token service
-│   │   └── Logging/                   ← Serilog setup
+│   │   ├── Auth/                      ← JWT issuance (JwtTokenGenerator)
+│   │   ├── DependencyInjection/       ← EF Core / ADO.NET registration, Identity,
+│   │   │                                JWT bearer, authorization policies
+│   │   └── Persistence/
+│   │       ├── LibraryDbContext.cs    ← Identity + domain tables, soft-delete query filter
+│   │       ├── EfUnitOfWork.cs
+│   │       ├── AdoUnitOfWork.cs       ← Shared SqlConnection + SqlTransaction
+│   │       ├── Configurations/        ← EF Core fluent mappings
+│   │       ├── DataModels/            ← Persistence models mirroring the SQL schema
+│   │       ├── Mappers/               ← Domain ↔ DataModel mapping
+│   │       └── Repositories/
+│   │           ├── Ef/                ← EF Core repositories (all aggregates), EfRepositoryBase
+│   │           └── Ado/               ← ADO.NET repositories (Category, Book)
 │   │
 │   ├── LibraryManagement.WebApi/
 │   │   ├── Controllers/
-│   │   ├── Middleware/
-│   │   ├── Policies/                  ← Authorization policies
 │   │   ├── ExceptionHandlers/         ← Global IExceptionHandler
 │   │   ├── appsettings.json
-│   │   └── Program.cs
+│   │   └── Program.cs                 ← Composition root: Serilog, data access provider switch
 │   │
 │   └── LibraryManagement.BlazorClient/
+│       ├── Components/
+│       ├── Layout/
+│       ├── Models/                    ← Client-side DTOs
 │       ├── Pages/
-│       ├── Services/                  ← HttpClient wrappers, token storage
-│       ├── Auth/                      ← AuthenticationStateProvider
+│       ├── Services/                  ← AuthMessageHandler, AuthState, token storage,
+│       │                                AuthClientService
 │       └── Program.cs
+│
+├── angular-client/                    ← Angular 22 SPA over the same API (outside the .sln)
+│   ├── src/app/                       ← Feature folders: auth/, categories/, books/
+│   └── cypress/                       ← End-to-end specs
 │
 ├── tests/
 │   ├── LibraryManagement.Domain.UnitTests/
@@ -98,11 +110,12 @@ LibraryManagement.sln
 │   └── LibraryManagement.Infrastructure.UnitTests/
 │
 ├── database/
+│   ├── docker-compose.yml             ← SQL Server, Flyway migrate, Flyway dev seed
 │   ├── migrations/                    ← Flyway-versioned SQL scripts
-│   │   ├── V001__create_initial_schema.sql
-│   │   ├── V002__create_identity_tables.sql
-│   │   └── ...
-│   └── README.md                      ← Flyway workflow
+│   │   ├── V001__initial_schema.sql
+│   │   └── V002__seed_catalog_data.sql
+│   └── seed-dev/                      ← DEV ONLY test data, separate Flyway history table
+│       └── V001__dev_test_data.sql
 │
 └── docs/
     ├── ARCHITECTURE.md                ← This document
@@ -198,10 +211,10 @@ The separation between `Book` (the work) and `BookCopy` (the physical artifact) 
 
 Authentication uses the standard JWT access + refresh dance:
 
-1. **Login** (`POST /auth/login`): credentials are verified through ASP.NET Core Identity. On success the API returns a short-lived access token (15 minutes) and a long-lived opaque refresh token (7 days). The refresh token is persisted server-side in the `RefreshTokens` table.
+1. **Login** (`POST /api/auth/login`): credentials are verified through ASP.NET Core Identity. On success the API returns a short-lived access token (15 minutes) and a long-lived opaque refresh token (7 days). The refresh token is persisted server-side in the `RefreshTokens` table as a SHA-256 hash.
 2. **Authenticated calls**: every request carries the access token in the `Authorization` header. The API validates the signature and extracts claims.
-3. **Refresh** (`POST /auth/refresh`): when the access token expires, the client posts the refresh token and receives a new access token. The refresh token's validity is checked against the database.
-4. **Logout** (`POST /auth/logout`): the refresh token is revoked in the database; the access token remains valid until it expires naturally (~15 minutes blast radius).
+3. **Refresh** (`POST /api/auth/refresh`): when the access token expires, the client posts the refresh token. The API looks up its hash and rejects it if it is revoked or expired. Otherwise it **revokes it and issues a new access + refresh token pair** (rotation). Each refresh token is single-use, so presenting one that was already rotated is rejected.
+4. **Logout** (`POST /api/auth/logout`): the refresh token is revoked in the database; the access token remains valid until it expires naturally (~15 minutes blast radius).
 
 Authorization is enforced through policies built on roles (`Reader`, `Librarian`, `Administrator`). Simple endpoints use `[Authorize(Roles = "...")]`; complex rules are expressed as named policies registered at startup.
 
@@ -226,7 +239,6 @@ The following are intentional non-goals for the initial milestone and are candid
 - **End-to-end tests** with Playwright or similar.
 - **CQRS with MediatR.** The current service layer is sufficient for the domain's complexity. CQRS can be layered on without changing the dependency structure if the project grows.
 - **Result Pattern.** Domain failures currently surface as exceptions translated by the global handler. A `Result<T>` style API is a future refactor with bounded cost.
-- **Refresh token rotation.** Implemented today is single-use-per-token-validity; rotation on every refresh is a security hardening for a later iteration.
 - **BFF (Backend For Frontend)** with HttpOnly cookies for the Blazor client. Current bearer-token-in-browser is pragmatic but has known XSS exposure.
 - **External identity providers** (Azure AD, Auth0, Google, etc.). The JWT issuance can be replaced by external providers without touching the rest of the API.
 - **Caching layers** (in-memory, Redis). Not needed at MVP scale.
