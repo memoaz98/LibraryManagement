@@ -1,3 +1,4 @@
+using System.Reflection;
 using LibraryManagement.Domain.Common;
 using LibraryManagement.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,11 @@ public abstract class EfRepositoryBase<TDomain, TDataModel, TId> : IRepository<T
     where TDataModel : class, new()
     where TId : notnull
 {
+    // BaseEntity.Id has a protected setter: only persistence assigns it, after
+    // the INSERT. Same approach as the ADO repositories.
+    private static readonly PropertyInfo IdProperty =
+        typeof(BaseEntity<TId>).GetProperty(nameof(BaseEntity<TId>.Id))!;
+
     protected readonly LibraryDbContext Db;
     protected readonly DbSet<TDataModel> Set;
     private readonly Func<TDataModel, TDomain> _toDomain;
@@ -54,7 +60,13 @@ public abstract class EfRepositoryBase<TDomain, TDataModel, TId> : IRepository<T
     public virtual async Task AddAsync(TDomain entity, CancellationToken cancellationToken = default)
     {
         var dataModel = _toDataModel(entity);
-        await Set.AddAsync(dataModel, cancellationToken);
+        var entry = await Set.AddAsync(dataModel, cancellationToken);
+
+        // EF tracks the data model, not the domain entity, so the IDENTITY
+        // value generated on save lands only on the data model. Copy it back
+        // once the unit of work commits.
+        Db.RegisterPostSaveAction(() =>
+            IdProperty.SetValue(entity, entry.Property(nameof(BaseEntity<TId>.Id)).CurrentValue));
     }
 
     public virtual void Update(TDomain entity)

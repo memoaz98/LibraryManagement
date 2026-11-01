@@ -19,6 +19,8 @@ namespace LibraryManagement.Infrastructure.Persistence;
 /// </remarks>
 public class LibraryDbContext : IdentityDbContext<IdentityUser>
 {
+    private readonly List<Action> _postSaveActions = new();
+
     public LibraryDbContext(DbContextOptions<LibraryDbContext> options)
         : base(options)
     {
@@ -34,6 +36,43 @@ public class LibraryDbContext : IdentityDbContext<IdentityUser>
 
     public DbSet<CopyStatusDataModel> CopyStatuses => Set<CopyStatusDataModel>();
     public DbSet<LoanStatusDataModel> LoanStatuses => Set<LoanStatusDataModel>();
+
+    /// <summary>
+    /// Queues an action to run after the next successful save. Repositories
+    /// use it to copy database-generated values (IDENTITY keys) back to the
+    /// domain entities they mapped from, since those values only exist once
+    /// the INSERT has run.
+    /// </summary>
+    internal void RegisterPostSaveAction(Action action)
+    {
+        _postSaveActions.Add(action);
+    }
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        var written = base.SaveChanges(acceptAllChangesOnSuccess);
+        RunPostSaveActions();
+        return written;
+    }
+
+    public override async Task<int> SaveChangesAsync(
+        bool acceptAllChangesOnSuccess,
+        CancellationToken cancellationToken = default)
+    {
+        var written = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        RunPostSaveActions();
+        return written;
+    }
+
+    private void RunPostSaveActions()
+    {
+        foreach (var action in _postSaveActions)
+        {
+            action();
+        }
+
+        _postSaveActions.Clear();
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
