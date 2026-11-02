@@ -87,7 +87,9 @@ try
 
     app.Run();
 }
-catch (Exception ex)
+// WebApplicationFactory stops the app with HostAbortedException once it has
+// captured the host; that is not a crash, so let it through unlogged.
+catch (Exception ex) when (ex is not HostAbortedException)
 {
     Log.Fatal(ex, "LibraryManagement.WebApi terminated unexpectedly");
 }
@@ -95,3 +97,7 @@ finally
 {
     Log.CloseAndFlush();
 }
+
+// Exposes the implicit Program class to WebApplicationFactory<Program> in the
+// integration tests.
+public partial class Program;

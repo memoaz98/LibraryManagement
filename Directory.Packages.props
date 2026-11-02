@@ -53,4 +53,10 @@
     <PackageVersion Include="FluentAssertions" Version="7.0.0" />
   </ItemGroup>
 
+  <ItemGroup Label="Integration testing">
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.0" />
+    <PackageVersion Include="Respawn" Version="7.0.0" />
+    <PackageVersion Include="Testcontainers.MsSql" Version="4.16.0" />
+  </ItemGroup>
+
 </Project>
