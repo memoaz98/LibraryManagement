@@ -92,6 +92,11 @@ try
 catch (Exception ex) when (ex is not HostAbortedException)
 {
     Log.Fatal(ex, "LibraryManagement.WebApi terminated unexpectedly");
+
+    // Rethrow so a failed start ends the process with an error (non-zero
+    // exit code) and hosts such as WebApplicationFactory see the real
+    // exception, instead of the app exiting as if it had succeeded.
+    throw;
 }
 finally
 {
