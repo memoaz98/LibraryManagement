@@ -8,8 +8,10 @@ namespace LibraryManagement.Domain.UnitTests.Entities;
 
 public class LoanTests
 {
+    private static readonly DateOnly Today = new(2026, 1, 15);
+
     private static Loan NewActiveLoan(int days = 14) =>
-        Loan.Create(memberId: 1, bookCopyId: 1, loanDurationDays: days);
+        Loan.Create(memberId: 1, bookCopyId: 1, loanDurationDays: days, today: Today);
 
     [Fact]
     public void Create_StartsActive()
@@ -31,7 +33,7 @@ public class LoanTests
     [Fact]
     public void Create_WithZeroDuration_Throws()
     {
-        var act = () => Loan.Create(memberId: 1, bookCopyId: 1, loanDurationDays: 0);
+        var act = () => Loan.Create(memberId: 1, bookCopyId: 1, loanDurationDays: 0, today: Today);
 
         act.Should().Throw<DomainException>();
     }
@@ -39,7 +41,7 @@ public class LoanTests
     [Fact]
     public void Create_WithExcessiveDuration_Throws()
     {
-        var act = () => Loan.Create(memberId: 1, bookCopyId: 1, loanDurationDays: 91);
+        var act = () => Loan.Create(memberId: 1, bookCopyId: 1, loanDurationDays: 91, today: Today);
 
         act.Should().Throw<DomainException>();
     }
@@ -49,7 +51,7 @@ public class LoanTests
     {
         var loan = NewActiveLoan();
 
-        loan.Return();
+        loan.Return(Today);
 
         loan.StatusId.Should().Be(LoanStatusIds.Returned);
         loan.ReturnDate.Should().NotBeNull();
@@ -59,9 +61,9 @@ public class LoanTests
     public void Return_FromAlreadyReturned_Throws()
     {
         var loan = NewActiveLoan();
-        loan.Return();
+        loan.Return(Today);
 
-        var act = () => loan.Return();
+        var act = () => loan.Return(Today);
 
         act.Should().Throw<DomainException>();
     }
@@ -81,7 +83,7 @@ public class LoanTests
     public void MarkAsLost_FromReturned_Throws()
     {
         var loan = NewActiveLoan();
-        loan.Return();
+        loan.Return(Today);
 
         var act = () => loan.MarkAsLost();
 
@@ -89,10 +91,10 @@ public class LoanTests
     }
 
     [Fact]
-    public void IsCurrentlyOverdue_WithFutureDueDate_IsFalse()
+    public void IsOverdueOn_WithFutureDueDate_IsFalse()
     {
         var loan = NewActiveLoan(days: 14);
 
-        loan.IsCurrentlyOverdue.Should().BeFalse();
+        loan.IsOverdueOn(Today).Should().BeFalse();
     }
 }

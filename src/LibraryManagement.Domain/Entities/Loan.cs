@@ -32,19 +32,15 @@ public class Loan : BaseEntity<long>
     public DateOnly? ReturnDate { get; private set; }
 
     /// <summary>
-    /// True if the loan is past its due date and has not been returned yet.
-    /// Computed at read time; does not require the loan to be in the
-    /// persisted Overdue state.
+    /// True if, on <paramref name="today"/>, the loan is past its due date and
+    /// has not been returned yet. Computed at read time; does not require the
+    /// loan to be in the persisted Overdue state.
     /// </summary>
-    public bool IsCurrentlyOverdue
+    public bool IsOverdueOn(DateOnly today)
     {
-        get
-        {
-            if (ReturnDate is not null) return false;
-            if (StatusId is LoanStatusIds.Lost) return false;
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            return DueDate < today;
-        }
+        if (ReturnDate is not null) return false;
+        if (StatusId is LoanStatusIds.Lost) return false;
+        return DueDate < today;
     }
 
     private Loan()
@@ -52,17 +48,16 @@ public class Loan : BaseEntity<long>
     }
 
     /// <summary>
-    /// Factory for creating a new active loan. The due date is derived from
-    /// <paramref name="loanDurationDays"/>, which the application layer
-    /// supplies from configuration.
+    /// Factory for creating a new active loan that starts on
+    /// <paramref name="today"/>. The due date is derived from
+    /// <paramref name="loanDurationDays"/>. The application layer supplies
+    /// both: the duration from configuration, today from its clock.
     /// </summary>
-    public static Loan Create(long memberId, long bookCopyId, int loanDurationDays)
+    public static Loan Create(long memberId, long bookCopyId, int loanDurationDays, DateOnly today)
     {
         ValidateMemberId(memberId);
         ValidateBookCopyId(bookCopyId);
         ValidateLoanDuration(loanDurationDays);
-
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
         return new Loan
         {
@@ -107,15 +102,14 @@ public class Loan : BaseEntity<long>
     // -----------------------------------------------------------------------
 
     /// <summary>
-    /// Closes the loan with a returned copy. Allowed from Active or Overdue.
+    /// Closes the loan with a copy returned on <paramref name="today"/>.
+    /// Allowed from Active or Overdue.
     /// </summary>
-    public void Return()
+    public void Return(DateOnly today)
     {
         if (StatusId is not LoanStatusIds.Active and not LoanStatusIds.Overdue)
             throw new DomainException(
                 "Only active or overdue loans can be returned.");
-
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
         if (today < LoanDate)
             throw new DomainException("Return date cannot be before the loan date.");
@@ -128,12 +122,11 @@ public class Loan : BaseEntity<long>
     /// Moves an active loan to the persisted Overdue state.
     /// Typically called by a scheduled job once <see cref="DueDate"/> passes.
     /// </summary>
-    public void MarkAsOverdue()
+    public void MarkAsOverdue(DateOnly today)
     {
         if (StatusId is not LoanStatusIds.Active)
             throw new DomainException("Only active loans can be marked as overdue.");
 
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
         if (DueDate >= today)
             throw new DomainException(
                 "A loan cannot be marked as overdue before its due date.");
