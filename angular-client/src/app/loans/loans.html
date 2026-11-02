@@ -1,0 +1,36 @@
+<h1>Loans</h1>
+
+@if (error()) {
+  <p class="error" role="alert" data-cy="loans-error">{{ error() }}</p>
+}
+@if (store.notice()) {
+  <p class="notice" role="status" data-cy="loans-notice">{{ store.notice() }}</p>
+}
+
+<h2>New loan</h2>
+<app-checkout-form
+  [members]="memberResults()"
+  [books]="books()"
+  [copies]="copies()"
+  [isSaving]="store.isSaving()"
+  (searchMembers)="searchMembers($event)"
+  (bookSelected)="loadCopies($event)"
+  (checkout)="checkout($event)"
+/>
+
+<h2>All loans</h2>
+<app-loan-filters [members]="members()" [query]="store.query()" (queryChange)="filter($event)" />
+
+@if (store.isLoading()) {
+  <p>Loading loans...</p>
+} @else {
+  <p data-cy="loans-summary">
+    {{ store.loans().length }} loans shown, {{ store.overdueCount() }} overdue.
+  </p>
+}
+
+<app-loan-table
+  [loans]="store.loans()"
+  [returningId]="store.returningId()"
+  (returnLoan)="returnLoan($event)"
+/>

@@ -2,6 +2,9 @@
   <a routerLink="" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" data-cy="nav-home">Home</a>
   <a routerLink="categories" routerLinkActive="active" data-cy="nav-categories">Categories</a>
   <a routerLink="books" routerLinkActive="active" data-cy="nav-books">Books</a>
+  @if (authState.isStaff()) {
+    <a routerLink="loans" routerLinkActive="active" data-cy="nav-loans">Loans</a>
+  }
 
   @if (authState.isAuthenticated()) {
     <button type="button" (click)="logout()" data-cy="nav-logout">Logout</button>

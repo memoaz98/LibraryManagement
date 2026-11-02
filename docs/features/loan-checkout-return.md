@@ -227,7 +227,8 @@ them.
 |---|---|
 | `LoanApi`, `MemberApi`, `BookCopyApi` | HTTP calls only (done). |
 | `LoanStore` | Root signal store: the loan list, the active filters, loading and saving flags, and the last error message. Its methods call `LoanApi` and map 409 reason codes to messages in one place. |
-| Checkout form | The member search and copy pickers keep their own local signals; they are form state, not shared. |
+| `Loans` page (smart) | Loads the members, books and available copies the form needs, and sends the user's actions to `LoanStore`. Lookup data is page state, not shared. |
+| `CheckoutForm`, `LoanFilters`, `LoanTable` (presentational) | No services: data comes in through inputs and user actions leave through outputs. |
 | `AuthState` | Exposes the user's roles, decoded from the access token, for the nav link and the route guard. |
 
 ## Decisions

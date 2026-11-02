@@ -1,0 +1,58 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="checkout-form" data-cy="checkout-form">
+  <label>
+    Find member
+    <input
+      type="search"
+      formControlName="search"
+      placeholder="Name or email"
+      (keydown.enter)="$event.preventDefault(); search()"
+      data-cy="checkout-member-search"
+    />
+  </label>
+  <button type="button" (click)="search()" data-cy="checkout-member-search-button">Search</button>
+
+  <label>
+    Member
+    <select formControlName="memberId" data-cy="checkout-member">
+      <option [ngValue]="null" disabled>Select a member</option>
+      @for (member of members() ?? []; track member.id) {
+        <option [ngValue]="member.id" [disabled]="!member.isActive">
+          {{ member.lastName }}, {{ member.firstName }} ({{ member.email }}){{
+            member.isActive ? '' : ' - inactive, cannot borrow'
+          }}
+        </option>
+      }
+    </select>
+  </label>
+
+  <label>
+    Book
+    <select formControlName="bookId" data-cy="checkout-book">
+      <option [ngValue]="null" disabled>Select a book</option>
+      @for (book of books(); track book.id) {
+        <option [ngValue]="book.id">{{ book.title }}</option>
+      }
+    </select>
+  </label>
+
+  <label>
+    Copy
+    <select formControlName="bookCopyId" data-cy="checkout-copy">
+      <option [ngValue]="null" disabled>Select an available copy</option>
+      @for (copy of copies() ?? []; track copy.id) {
+        <option [ngValue]="copy.id">{{ copy.inventoryCode }}</option>
+      }
+    </select>
+  </label>
+
+  <button type="submit" [disabled]="form.invalid || isSaving()" data-cy="checkout-submit">
+    {{ isSaving() ? 'Lending...' : 'Lend' }}
+  </button>
+</form>
+
+@if (members()?.length === 0) {
+  <small class="field-error" data-cy="checkout-no-members">No members match the search.</small>
+}
+@if (copies()?.length === 0) {
+  <small class="field-error" data-cy="checkout-no-copies">This book has no available copies.</small>
+}

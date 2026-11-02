@@ -5,6 +5,9 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { App } from './app';
 
+/** An unsigned token carrying `payload`: enough to read its claims. */
+const tokenWith = (payload: object) => `header.${btoa(JSON.stringify(payload))}.signature`;
+
 describe('App', () => {
   beforeEach(async () => {
     // AuthState restores the session from localStorage in its constructor,
@@ -40,6 +43,24 @@ describe('App', () => {
     expect(labels).toContain('Home');
     expect(labels).toContain('Categories');
     expect(labels).toContain('Books');
+  });
+
+  it('should show the Loans link to staff', async () => {
+    localStorage.setItem('library.accessToken', tokenWith({ role: 'Librarian' }));
+
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('[data-cy="nav-loans"]')).not.toBeNull();
+  });
+
+  it('should hide the Loans link from readers', async () => {
+    localStorage.setItem('library.accessToken', tokenWith({ role: 'Reader' }));
+
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('[data-cy="nav-loans"]')).toBeNull();
   });
 
   it('should offer Login and Register while the user is not authenticated', async () => {

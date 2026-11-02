@@ -1,0 +1,49 @@
+<table data-cy="loan-table">
+  <thead>
+    <tr>
+      <th>Book</th>
+      <th>Copy</th>
+      <th>Member</th>
+      <th>Lent</th>
+      <th>Due</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (loan of loans(); track loan.id) {
+      <tr [class.overdue]="loan.isOverdue" data-cy="loan-row">
+        <td>{{ loan.bookTitle }}</td>
+        <td>{{ loan.inventoryCode }}</td>
+        <td>{{ loan.memberName }}</td>
+        <td>{{ loan.loanDate }}</td>
+        <td>{{ loan.dueDate }}</td>
+        <td>
+          @if (loan.returnDate) {
+            Returned on {{ loan.returnDate }}
+          } @else if (loan.isOverdue) {
+            Overdue
+          } @else {
+            {{ loan.status }}
+          }
+        </td>
+        <td>
+          @if (isOpen(loan)) {
+            <button
+              type="button"
+              [disabled]="returningId() !== null"
+              (click)="returnLoan.emit(loan)"
+              data-cy="loan-return"
+            >
+              {{ returningId() === loan.id ? 'Returning...' : 'Return' }}
+            </button>
+          }
+        </td>
+      </tr>
+    } @empty {
+      <tr>
+        <td colspan="7">No loans match these filters.</td>
+      </tr>
+    }
+  </tbody>
+</table>

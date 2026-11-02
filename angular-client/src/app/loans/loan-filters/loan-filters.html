@@ -1,0 +1,22 @@
+<div class="filters" data-cy="loan-filters">
+  <label>
+    Status
+    <select #status (change)="changeStatus(status.value)" data-cy="loan-filter-status">
+      <option value="" [selected]="!query().status">All</option>
+      <option value="active" [selected]="query().status === 'active'">Open</option>
+      <option value="returned" [selected]="query().status === 'returned'">Returned</option>
+    </select>
+  </label>
+
+  <label>
+    Member
+    <select #member (change)="changeMember(member.value)" data-cy="loan-filter-member">
+      <option value="" [selected]="query().memberId === undefined">All members</option>
+      @for (item of members(); track item.id) {
+        <option [value]="item.id" [selected]="query().memberId === item.id">
+          {{ item.lastName }}, {{ item.firstName }}
+        </option>
+      }
+    </select>
+  </label>
+</div>
