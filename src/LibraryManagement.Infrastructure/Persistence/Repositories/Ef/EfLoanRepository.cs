@@ -43,9 +43,14 @@ public class EfLoanRepository
                 cancellationToken);
     }
 
-    public async Task<bool> HasOpenLoanForBookAsync(long memberId, long bookId, CancellationToken cancellationToken = default)
+    public Task<bool> HasOpenLoanForBookAsync(long memberId, long bookId, CancellationToken cancellationToken = default)
     {
-        await Task.CompletedTask;
-        throw new NotImplementedException();
+        // Join copies without their soft-delete filter: a loan on a copy that
+        // was deleted afterwards still counts as an open loan of that book.
+        return Set.AsNoTracking()
+            .Where(l => l.MemberId == memberId
+                     && (l.StatusId == LoanStatusIds.Active || l.StatusId == LoanStatusIds.Overdue))
+            .Join(Db.BookCopies.IgnoreQueryFilters(), l => l.BookCopyId, c => c.Id, (l, c) => c.BookId)
+            .AnyAsync(copyBookId => copyBookId == bookId, cancellationToken);
     }
 }

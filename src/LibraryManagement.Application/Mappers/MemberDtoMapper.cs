@@ -7,6 +7,11 @@ internal static class MemberDtoMapper
 {
     public static MemberDto ToDto(Member domain)
     {
-        throw new NotImplementedException();
+        return new MemberDto(
+            Id: domain.Id,
+            FirstName: domain.FirstName,
+            LastName: domain.LastName,
+            Email: domain.Email,
+            IsActive: domain.IsActive);
     }
 }

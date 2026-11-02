@@ -7,6 +7,9 @@ public class BookCopyQueryDtoValidator : AbstractValidator<BookCopyQueryDto>
 {
     public BookCopyQueryDtoValidator()
     {
-        // Scaffolding: rules are added with the implementation.
+        RuleFor(x => x.Status)
+            .Must(status => string.IsNullOrWhiteSpace(status)
+                || string.Equals(status.Trim(), "available", StringComparison.OrdinalIgnoreCase))
+            .WithMessage("Status must be 'available'.");
     }
 }

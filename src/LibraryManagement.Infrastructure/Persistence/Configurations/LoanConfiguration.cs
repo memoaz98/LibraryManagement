@@ -6,6 +6,13 @@ namespace LibraryManagement.Infrastructure.Persistence.Configurations;
 
 public class LoanConfiguration : IEntityTypeConfiguration<LoanDataModel>
 {
+    /// <summary>
+    /// Unique index allowing one open (Active or Overdue) loan per copy.
+    /// Created by migration V003; <see cref="EfUnitOfWork"/> turns its
+    /// violations into a 409.
+    /// </summary>
+    public const string OpenLoanPerCopyIndexName = "UX_Loans_BookCopyId_Open";
+
     public void Configure(EntityTypeBuilder<LoanDataModel> builder)
     {
         builder.ToTable("Loans");
@@ -37,6 +44,9 @@ public class LoanConfiguration : IEntityTypeConfiguration<LoanDataModel>
                .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(l => l.BookCopyId).HasDatabaseName("IX_Loans_BookCopyId");
+        builder.HasIndex(l => l.BookCopyId, OpenLoanPerCopyIndexName)
+               .IsUnique()
+               .HasFilter("[StatusId] IN (1, 3) AND [IsDeleted] = 0");
         builder.HasIndex(l => l.MemberId).HasDatabaseName("IX_Loans_MemberId");
         builder.HasIndex(l => l.StatusId).HasDatabaseName("IX_Loans_StatusId");
         builder.HasIndex(l => l.DueDate)

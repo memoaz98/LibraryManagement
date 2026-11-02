@@ -26,13 +26,17 @@ public class EfBookCopyRepository
     {
         var dataModels = await Set.AsNoTracking()
             .Where(c => c.BookId == bookId && c.StatusId == CopyStatusIds.Available)
+            .OrderBy(c => c.InventoryCode)
             .ToListAsync(cancellationToken);
         return dataModels.Select(BookCopyMapper.ToDomain).ToList();
     }
 
     public async Task<IReadOnlyList<BookCopy>> ListByBookIdAsync(long bookId, CancellationToken cancellationToken = default)
     {
-        await Task.CompletedTask;
-        throw new NotImplementedException();
+        var dataModels = await Set.AsNoTracking()
+            .Where(c => c.BookId == bookId)
+            .OrderBy(c => c.InventoryCode)
+            .ToListAsync(cancellationToken);
+        return dataModels.Select(BookCopyMapper.ToDomain).ToList();
     }
 }

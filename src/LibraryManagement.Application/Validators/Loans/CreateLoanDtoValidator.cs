@@ -7,6 +7,10 @@ public class CreateLoanDtoValidator : AbstractValidator<CreateLoanDto>
 {
     public CreateLoanDtoValidator()
     {
-        // Scaffolding: rules are added with the implementation.
+        RuleFor(x => x.MemberId)
+            .GreaterThan(0).WithMessage("MemberId must be positive.");
+
+        RuleFor(x => x.BookCopyId)
+            .GreaterThan(0).WithMessage("BookCopyId must be positive.");
     }
 }

@@ -74,13 +74,21 @@ public class GlobalExceptionHandler : IExceptionHandler
 
     private static ProblemDetails HandleConflictException(ConflictException ex)
     {
-        return new ProblemDetails
+        var problemDetails = new ProblemDetails
         {
             Title = "Conflict with current state.",
             Status = StatusCodes.Status409Conflict,
             Detail = ex.Message,
             Type = "https://tools.ietf.org/html/rfc7231#section-6.5.8"
         };
+
+        // Machine-readable reason, so clients can tell 409s apart.
+        if (ex.Code is not null)
+        {
+            problemDetails.Extensions["code"] = ex.Code;
+        }
+
+        return problemDetails;
     }
 
     private static ProblemDetails HandleUnauthorizedException(UnauthorizedException ex)

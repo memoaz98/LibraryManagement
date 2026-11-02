@@ -1,4 +1,5 @@
 using LibraryManagement.Application.Dtos.Members;
+using LibraryManagement.Application.Mappers;
 using LibraryManagement.Domain.Interfaces;
 
 namespace LibraryManagement.Application.Services;
@@ -21,7 +22,7 @@ public class MemberService
     /// </summary>
     public async Task<IReadOnlyList<MemberDto>> SearchAsync(string? search, CancellationToken cancellationToken)
     {
-        await Task.CompletedTask;
-        throw new NotImplementedException();
+        var members = await _memberRepo.SearchAsync(search, cancellationToken);
+        return members.Select(MemberDtoMapper.ToDto).ToList();
     }
 }

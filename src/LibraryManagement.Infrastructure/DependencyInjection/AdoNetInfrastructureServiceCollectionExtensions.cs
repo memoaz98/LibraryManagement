@@ -1,6 +1,5 @@
 using LibraryManagement.Application.Auth;
 using LibraryManagement.Application.Auth.Interfaces;
-using LibraryManagement.Application.Loans;
 using LibraryManagement.Application.Loans.Interfaces;
 using LibraryManagement.Domain.Interfaces;
 using LibraryManagement.Infrastructure.Auth;
@@ -45,10 +44,7 @@ public static class AdoNetInfrastructureServiceCollectionExtensions
         {
             configuration.GetSection(JwtOptions.SectionName).Bind(opts);
         });
-        services.Configure<LoanOptions>(opts =>
-        {
-            configuration.GetSection(LoanOptions.SectionName).Bind(opts);
-        });
+        services.AddLoanOptions(configuration);
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
         return services;
