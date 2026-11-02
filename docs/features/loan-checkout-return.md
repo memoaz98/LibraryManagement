@@ -211,6 +211,25 @@ ProblemDetails body. Clients map the code to a message; tests assert it.
 | `same_book_on_loan` | BR-19 | Checkout |
 | `loan_not_open` | BR-09 | Return |
 
+## Angular client
+
+One staff page, `/loans`, visible only to Librarian and Administrator:
+
+- **New loan** form above the table: search a member, pick a book, then one of its available copies,
+  and submit. A refused checkout shows a readable message for its 409 reason code.
+- **Loans table**: every loan, newest first, with status and member filters, overdue loans
+  highlighted, and a **Return** button on each open loan.
+
+The API also serves a Reader's own loans and single-loan reads; this feature builds no screen for
+them.
+
+| Piece | Responsibility |
+|---|---|
+| `LoanApi`, `MemberApi`, `BookCopyApi` | HTTP calls only (done). |
+| `LoanStore` | Root signal store: the loan list, the active filters, loading and saving flags, and the last error message. Its methods call `LoanApi` and map 409 reason codes to messages in one place. |
+| Checkout form | The member search and copy pickers keep their own local signals; they are form state, not shared. |
+| `AuthState` | Exposes the user's roles, decoded from the access token, for the nav link and the route guard. |
+
 ## Decisions
 
 | ID | Question | Decision |
@@ -238,6 +257,10 @@ ProblemDetails body. Clients map the code to a message; tests assert it.
 | D-21 | `GET /api/loans` with `memberId` or `bookCopyId` 0 or negative | 400. An unknown positive id still returns an empty list (E-07). |
 | D-22 | Tie-break when two loans share a `LoanDate` | Highest `Id` first, consistent with "newest first". |
 | D-23 | Which test layers cover this feature? | Domain unit tests and API integration tests. No Application-layer unit tests: the integration tests exercise the service rules end to end. |
+| D-24 | Angular state management | A root signal store service, `LoanStore`, following the `AuthState` pattern: private writable signals, read-only and `computed` selectors, and methods that call `LoanApi`. No NgRx and no new dependency. |
+| D-25 | Which Angular screens? | One staff `/loans` page: the checkout form above the loans list (filters, overdue highlight, Return). No Reader "My loans" page and no loan detail modal for now. |
+| D-26 | How does the client know what to show? | `AuthState` decodes the access token's `role` claims. The Loans nav link and a role guard limit `/loans` to Librarian and Administrator. This only shapes the UI; the API still enforces the policies. |
+| D-27 | How do screens update after a write? | From the API response: a checkout adds the returned loan at the top of the list, and a return replaces that loan in place. No reload. |
 
 ## Test plan
 
