@@ -82,4 +82,37 @@ public class BookCopyTests
 
         copy.StatusId.Should().Be(CopyStatusIds.Lost);
     }
+
+    [Fact]
+    public void MarkAsBorrowed_FromMaintenance_Throws()
+    {
+        var copy = NewCopy();
+        copy.SendToMaintenance();
+
+        var act = () => copy.MarkAsBorrowed();
+
+        act.Should().Throw<DomainException>();
+    }
+
+    [Fact]
+    public void MarkAsBorrowed_FromLost_Throws()
+    {
+        var copy = NewCopy();
+        copy.MarkAsBorrowed();
+        copy.MarkAsLost();
+
+        var act = () => copy.MarkAsBorrowed();
+
+        act.Should().Throw<DomainException>();
+    }
+
+    [Fact]
+    public void MarkAsReturned_FromAvailable_Throws()
+    {
+        var copy = NewCopy();
+
+        var act = () => copy.MarkAsReturned();
+
+        act.Should().Throw<DomainException>();
+    }
 }
