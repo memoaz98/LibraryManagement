@@ -1,5 +1,6 @@
 import { Service, signal, computed, inject } from '@angular/core';
 import { TokenStorage } from './token-storage';
+import { isStaffRole, readTokenRoles } from './token-roles';
 
 @Service()
 export class AuthState {
@@ -9,6 +10,10 @@ export class AuthState {
   private readonly refreshToken = signal<string | null>(null);
 
   readonly isAuthenticated = computed(() => this.accessToken() !== null);
+
+  // Roles shape the UI only; the API enforces them.
+  readonly roles = computed(() => readTokenRoles(this.accessToken()));
+  readonly isStaff = computed(() => this.roles().some(isStaffRole));
 
   constructor() {
     // Restore session from storage on startup
