@@ -91,12 +91,21 @@ public class LibraryApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     /// </summary>
     public HttpClient CreateClientFor(string userId, params string[] roles)
     {
-        var jwtOptions = Services.GetRequiredService<IOptions<JwtOptions>>().Value;
         var client = CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            TestJwtTokens.Create(jwtOptions, userId, roles));
+            CreateTokenFor(userId, roles));
         return client;
+    }
+
+    /// <summary>
+    /// An access token for <paramref name="userId"/> with the given roles. Also
+    /// valid for hosts derived with <c>WithWebHostBuilder</c>, which share the key.
+    /// </summary>
+    public string CreateTokenFor(string userId, params string[] roles)
+    {
+        var jwtOptions = Services.GetRequiredService<IOptions<JwtOptions>>().Value;
+        return TestJwtTokens.Create(jwtOptions, userId, roles);
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
