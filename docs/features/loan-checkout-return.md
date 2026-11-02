@@ -1,6 +1,6 @@
 # Feature: Loan checkout and return
 
-- **Status:** Agreed, endpoints defined
+- **Status:** Implemented; every test in the [test plan](#test-plan) passes
 - **Last updated:** 2026-11-01
 
 ## User story
@@ -178,10 +178,11 @@ instead of a 500.
 | 1 | Creating through EF returned **`Id = 0`**, which made the loan response and the `Location` header wrong. | **Fixed** (`e3dca1a`) | Done. |
 | 2 | `Loan.IsCurrentlyOverdue` compared against `CopyStatusIds.Lost`. | **Fixed** (`9e644e0`) | Done. |
 | 3 | **AdoNet mode drops EF writes**, and Loan and BookCopy only have EF repositories. | Out of scope | EF only (D-03). |
-| 4 | The config doesn't match the spec. appsettings has `Loan:MaxActiveLoansPerMember = 5`, and no options class exists. | Part of the feature | Set the max to 3 and add `LoanOptions`, validated at startup. |
-| 5 | **Members and copies can't be looked up**, register doesn't create a Member, and the dev seed has no members or copies. | Part of the feature | Lookup endpoints (D-16), and a dev seed with members, copies and a Reader user linked to a member. |
+| 4 | The config didn't match the spec: appsettings had `Loan:MaxActiveLoansPerMember = 5`, and no options class existed. | **Done** | The max is 3, and `LoanOptions` is validated at startup. |
+| 5 | **Members and copies couldn't be looked up**, register doesn't create a Member, and the dev seed had no members or copies. | **Done** | Lookup endpoints (D-16), and `database/seed-dev/V002__dev_loan_data.sql`: three members (one inactive), two copies per sample book, and `reader@test.com` / `Test1234!` linked to the member Ana Mora. |
 | 6 | The current user's id is in the JWT `sub` claim (inbound claim mapping is turned off). | Note | The controller reads `sub` and passes it to the service; Application never touches `HttpContext`. |
 | 7 | The domain calls `DateTime.UtcNow` directly, which makes overdue scenarios hard to test. | Addressed for loans | D-11: `Loan` takes today's date as a parameter, and `LoanService` and `EfLoanQueries` read it from `TimeProvider`. Integration tests swap in a fake clock. The rest of the code keeps `DateTime.UtcNow`. |
+| 8 | `Program.cs` caught and logged startup exceptions without rethrowing them, so a failed start exited with code 0 and test hosts never saw the error (found by IT-75). | **Fixed** | The catch block rethrows after logging. |
 
 ## Error contract
 

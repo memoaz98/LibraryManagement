@@ -283,7 +283,7 @@ LibraryManagement/
 
 │   ├── docker-compose.yml          # SQL Server + Flyway
 
-│   └── migrations/                 # V001 schema, V002 seed data
+│   └── migrations/                 # V001 schema, V002 catalog seed, V003 open-loan index
 
 ├── docs/
 
@@ -332,7 +332,7 @@ LibraryManagement/
 
 This project intentionally has scope limits to stay focused on architecture demonstration:
 
-- `Author`, `Member`, `Loan`, `BookCopy` have full domain models and repositories but no Application services or Controllers yet — the pattern is demonstrated with Category and Book.
+- Loans are implemented end to end (checkout, return, reading loans, member and copy lookups; see `docs/features/loan-checkout-return.md`), but members and copies have no create/edit endpoints yet: local data comes from the dev seed.
 - The Blazor frontend has minimal styling — focus is on the auth flow and architecture, not visual polish.
 - Edit/delete UIs are not implemented for the same reason.
 
