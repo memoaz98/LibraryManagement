@@ -23,6 +23,7 @@ public class LoanService
     private readonly IValidator<CreateLoanDto> _createValidator;
     private readonly IValidator<LoanQueryDto> _queryValidator;
     private readonly LoanOptions _options;
+    private readonly TimeProvider _timeProvider;
 
     public LoanService(
         ILoanRepository loanRepo,
@@ -33,7 +34,8 @@ public class LoanService
         IUnitOfWork uow,
         IValidator<CreateLoanDto> createValidator,
         IValidator<LoanQueryDto> queryValidator,
-        IOptions<LoanOptions> options)
+        IOptions<LoanOptions> options,
+        TimeProvider timeProvider)
     {
         _loanRepo = loanRepo;
         _memberRepo = memberRepo;
@@ -44,6 +46,7 @@ public class LoanService
         _createValidator = createValidator;
         _queryValidator = queryValidator;
         _options = options.Value;
+        _timeProvider = timeProvider;
     }
 
     /// <summary>

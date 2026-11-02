@@ -18,6 +18,9 @@ public static class ApplicationServiceCollectionExtensions
 
         services.AddValidatorsFromAssembly(typeof(ApplicationServiceCollectionExtensions).Assembly);
 
+        // The clock the loan feature reads "today" from. Tests replace it.
+        services.AddSingleton(TimeProvider.System);
+
         return services;
     }
 }

@@ -53,8 +53,8 @@ domain today.
 | BR-14 | Librarian and Admin can list all loans, filtered by member, by copy and by status (`GET /api/loans`). | Service |
 | BR-15 | Loans are never deleted, so there is no delete operation. | Design |
 | BR-16 | A copy whose book is soft-deleted cannot be lent. Copies are not cascade-deleted with their book. | Service |
-| BR-17 | A loan becomes overdue the day **after** `DueDate`. A loan due today is not overdue. This matches `Loan.IsCurrentlyOverdue`. | Domain |
-| BR-18 | A return always uses today's date, with no backdating. This matches `Loan.Return()`. | Domain |
+| BR-17 | A loan becomes overdue the day **after** `DueDate`. A loan due today is not overdue. This matches `Loan.IsOverdueOn(today)`. | Domain |
+| BR-18 | A return always uses today's date, with no backdating. This matches `Loan.Return(today)`. | Domain |
 | BR-19 | A member cannot hold two open loans for copies of the **same book**. | Service |
 
 ## API
@@ -179,7 +179,7 @@ instead of a 500.
 | 4 | The config doesn't match the spec. appsettings has `Loan:MaxActiveLoansPerMember = 5`, and no options class exists. | Part of the feature | Set the max to 3 and add `LoanOptions`, validated at startup. |
 | 5 | **Members and copies can't be looked up**, register doesn't create a Member, and the dev seed has no members or copies. | Part of the feature | Lookup endpoints (D-16), and a dev seed with members, copies and a Reader user linked to a member. |
 | 6 | The current user's id is in the JWT `sub` claim (inbound claim mapping is turned off). | Note | The controller reads `sub` and passes it to the service; Application never touches `HttpContext`. |
-| 7 | The domain calls `DateTime.UtcNow` directly, which makes overdue scenarios hard to test. | Deferred | `TimeProvider` comes later (D-11). Until then, tests build past-dated loans with `Loan.Reconstitute`. |
+| 7 | The domain calls `DateTime.UtcNow` directly, which makes overdue scenarios hard to test. | Addressed for loans | D-11: `Loan` takes today's date as a parameter, and `LoanService` and `EfLoanQueries` read it from `TimeProvider`. Integration tests swap in a fake clock. The rest of the code keeps `DateTime.UtcNow`. |
 
 ## Error contract
 
@@ -207,7 +207,7 @@ instead of a 500.
 | D-08 | Prerequisite data for Members and copies | Dev seed, plus the lookups in D-16. |
 | D-09 | Can a copy of a soft-deleted book be lent? | No (BR-16). |
 | D-10 | One copy per book per member? | Yes (BR-19). |
-| D-11 | Clock: `DateTime.UtcNow` or `TimeProvider`? | `TimeProvider` will be introduced, but not yet. Until then the domain keeps `DateTime.UtcNow`. |
+| D-11 | Clock: `DateTime.UtcNow` or `TimeProvider`? | `TimeProvider`, for the loan feature only. The domain gets dates as parameters (`Loan.Create(..., today)`, `Return(today)`, `IsOverdueOn(today)`, `MarkAsOverdue(today)`), so it stays clock-free. `LoanService` and `EfLoanQueries` read `TimeProvider`, registered in DI. Other entities, validators and auth keep `DateTime.UtcNow` for now. |
 | D-12 | Record which staff member did the checkout or return? | No, because it needs a schema change. |
 | D-13 | Which clients get the UI? | Angular only. |
 | D-14 | How does a Reader get their own loans? | `GET /api/members/me/loans`, resolved from the JWT `sub` claim. |
